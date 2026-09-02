@@ -262,8 +262,9 @@ export function App() {
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.2 }}
+            defaultViewport={{ x: 100, y: 50, zoom: 0.85 }}
+            minZoom={0.2}
+            maxZoom={2}
             className="bg-[#070A10]"
             style={{ width: '100%', height: '100%' }}
           >
