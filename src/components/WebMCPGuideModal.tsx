@@ -11,7 +11,8 @@ import {
   ShieldAlert, 
   TrendingDown, 
   FileCode,
-  Search
+  Search,
+  FileJson
 } from 'lucide-react';
 
 interface WebMCPGuideModalProps {
@@ -84,7 +85,7 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
       userPrompt: 'List all available GPU compute instances across AWS, GCP, and Azure with hourly and monthly pricing.',
       toolName: 'list_cloud_regions_and_skus',
       toolPayload: { provider: 'all', serviceType: 'compute' },
-      expectedResult: 'Returns AWS g5.2xlarge (A10G), GCP a2-highgpu-1g (A100), and Azure D4s_v5 with discount rules.',
+      expectedResult: 'Returns AWS g5.2xlarge (A10G), GCP a2-highgpu-1g (A100), and Azure D4s_v5 with allowed commitment rules.',
       icon: Search,
     },
     {
@@ -106,6 +107,20 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
     },
     {
       id: 7,
+      title: 'Apply Custom Enterprise Discount Agreement (EDA)',
+      category: 'Enterprise Rates',
+      userPrompt: 'Apply our Fortune 500 Enterprise Discount Agreement with a 15% blanket discount across all cloud instances and $0.04/GB egress.',
+      toolName: 'apply_enterprise_rate_sheet',
+      toolPayload: {
+        enterpriseName: 'Fortune 500 Global Agreement',
+        blanketDiscountPercent: 15.0,
+        customEgressRatePerGb: 0.04,
+      },
+      expectedResult: 'Overrides in-memory catalog pricing, applies corporate discount brackets, and synchronizes live canvas cards.',
+      icon: FileJson,
+    },
+    {
+      id: 8,
       title: 'Export Production Terraform HCL & Enterprise CPQ Quote',
       category: 'Export & IaC',
       userPrompt: 'Export production Terraform HCL 2.0 and generate a formal CPQ Quote PDF for "Global FinTech Corp".',
@@ -122,7 +137,7 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const categories = ['all', 'FinOps Optimization', 'Compliance & Audit', 'Traffic Simulation', 'Catalog & Discovery', 'Topology Mutation', 'Export & IaC'];
+  const categories = ['all', 'FinOps Optimization', 'Enterprise Rates', 'Compliance & Audit', 'Traffic Simulation', 'Catalog & Discovery', 'Topology Mutation', 'Export & IaC'];
   const filteredExamples = selectedCategory === 'all' ? examples : examples.filter(e => e.category === selectedCategory);
 
   return (
@@ -139,7 +154,7 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
                 <h2 className="text-sm font-bold text-gray-100">How to Use WebMCP & Real-World Examples</h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  7 WebMCP Tools Live
+                  8 WebMCP Tools Live
                 </span>
               </div>
               <p className="text-xs text-gray-400">Connect ChatGPT Desktop, Claude, or autonomous AI agents to your visual topology</p>
@@ -162,7 +177,7 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
               <span>How WebMCP Connection Works</span>
             </div>
             <p className="text-[11px] text-gray-300 leading-relaxed">
-              When an AI agent (such as <strong>ChatGPT Desktop</strong> or <strong>Google Chrome with <code className="text-blue-300">#enable-webmcp-testing</code></strong>) loads this webpage, it discovers 7 typed tools registered on <code className="text-emerald-300">document.modelContext</code>. The AI reasons in natural language and calls tools to inspect, simulate, or mutate the visual canvas in <strong>&lt;10ms</strong>.
+              When an AI agent (such as <strong>ChatGPT Desktop</strong> or <strong>Google Chrome with <code className="text-blue-300">#enable-webmcp-testing</code></strong>) loads this webpage, it discovers 8 typed tools registered on <code className="text-emerald-300">document.modelContext</code>. The AI reasons in natural language and calls tools to inspect, simulate, or mutate the visual canvas in <strong>&lt;10ms</strong>.
             </p>
           </div>
 
@@ -178,7 +193,7 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
                     : 'bg-gray-900/80 text-gray-400 hover:bg-gray-800 border border-gray-800'
                 }`}
               >
-                {cat === 'all' ? 'All 7 Examples' : cat}
+                {cat === 'all' ? 'All 8 Examples' : cat}
               </button>
             ))}
           </div>
@@ -262,7 +277,7 @@ export const WebMCPGuideModal: React.FC<WebMCPGuideModalProps> = ({ isOpen, onCl
 
         {/* Footer */}
         <div className="px-6 py-3 border-t border-gray-800 bg-gray-950/80 flex items-center justify-between">
-          <span className="text-[11px] text-gray-400">All 7 tools registered and ready on <code className="text-emerald-400 font-mono">document.modelContext</code></span>
+          <span className="text-[11px] text-gray-400">All 8 tools registered and ready on <code className="text-emerald-400 font-mono">document.modelContext</code></span>
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all cursor-pointer shadow-lg shadow-blue-600/20"

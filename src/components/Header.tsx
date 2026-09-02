@@ -50,9 +50,9 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="font-extrabold text-sm text-gray-100 tracking-tight flex items-center gap-1.5">
                 CloudTopology <span className="text-blue-400 font-mono text-xs px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">CPQ</span>
               </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1" title="Connected to WebMCP Model Context (7 Tools Ready)">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1" title="Connected to WebMCP Model Context (8 Tools Ready)">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                WebMCP Active (7 Tools)
+                WebMCP Active (8 Tools)
               </span>
             </div>
             <p className="text-[10px] text-gray-400">Multi-Cloud FinOps, Latency & Egress Architecture CPQ</p>
@@ -203,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
           >
             <Cpu className="w-3.5 h-3.5" />
-            <span>WebMCP Guide (7 Examples)</span>
+            <span>WebMCP Guide (8 Examples)</span>
           </button>
         </div>
       </div>

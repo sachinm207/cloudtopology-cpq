@@ -13,9 +13,9 @@ describe('WebMCP Standard Compliance & Tool Registration Suite', () => {
     );
   });
 
-  it('registers all 7 official WebMCP tools with JSON schemas', () => {
+  it('registers all 8 official WebMCP tools with JSON schemas', () => {
     const tools = webMCPBridge.getAllTools();
-    expect(tools.length).toBe(7);
+    expect(tools.length).toBe(8);
 
     const toolNames = tools.map(t => t.name);
     expect(toolNames).toContain('list_cloud_regions_and_skus');
@@ -24,6 +24,7 @@ describe('WebMCP Standard Compliance & Tool Registration Suite', () => {
     expect(toolNames).toContain('validate_compliance_and_latency');
     expect(toolNames).toContain('optimize_cloud_architecture');
     expect(toolNames).toContain('apply_topology_to_canvas');
+    expect(toolNames).toContain('apply_enterprise_rate_sheet');
     expect(toolNames).toContain('export_terraform_iac');
 
     for (const tool of tools) {
@@ -33,11 +34,12 @@ describe('WebMCP Standard Compliance & Tool Registration Suite', () => {
     }
   });
 
-  it('executes list_cloud_regions_and_skus tool properly', async () => {
+  it('executes list_cloud_regions_and_skus tool properly with allowedPricingTiers', async () => {
     const result = await webMCPBridge.executeTool('list_cloud_regions_and_skus', { provider: 'aws' });
     expect(result.totalRegions).toBeGreaterThan(0);
     expect(result.totalSKUs).toBeGreaterThan(0);
     expect(result.skus.every((s: any) => s.provider === 'aws')).toBe(true);
+    expect(result.skus[0].allowedPricingTiers).toBeTruthy();
   });
 
   it('executes get_topology_summary tool and returns accurate spend & latency', async () => {
@@ -69,6 +71,17 @@ describe('WebMCP Standard Compliance & Tool Registration Suite', () => {
     });
     expect(result.success).toBe(true);
     expect(result.monthlySavingsAchieved).toBeGreaterThan(0);
+  });
+
+  it('executes apply_enterprise_rate_sheet tool with custom 15% EDA discount', async () => {
+    const result = await webMCPBridge.executeTool('apply_enterprise_rate_sheet', {
+      enterpriseName: 'Fortune 500 Global Agreement',
+      blanketDiscountPercent: 15.0,
+      customEgressRatePerGb: 0.04,
+    });
+    expect(result.success).toBe(true);
+    expect(result.blanketDiscountPercent).toBe(15.0);
+    expect(result.newTotalMonthlySpend).toBeGreaterThan(0);
   });
 
   it('executes export_terraform_iac tool and produces valid HCL 2.0 and CPQ Quote', async () => {

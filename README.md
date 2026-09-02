@@ -31,7 +31,7 @@ Enterprises waste **over $150 Billion annually** on misconfigured cloud infrastr
 ## 🎯 Devpost Submission Questions
 
 ### 1. Why is this use case a strong fit for WebMCP?
-Raw LLMs struggle with multi-tier tiered egress curves, multi-cloud pricing tables, geodesic speed-of-light fiber latency formulas, and complex spatial network graphs. WebMCP provides the exact bridge needed: the webpage hosts a deterministic client-side FinOps calculation engine and exposes typed tools (`get_topology_summary`, `simulate_traffic_and_egress`, `optimize_cloud_architecture`, `export_terraform_iac`) directly to the AI agent. The agent reasons about high-level business constraints (e.g. *"keep European response times under 50ms while cutting our AWS bandwidth bill"*), while the client-side WebMCP application guarantees 100% mathematical precision and real-time visual feedback.
+Raw LLMs struggle with multi-tier tiered egress curves, multi-cloud pricing tables, geodesic speed-of-light fiber latency formulas, and complex spatial network graphs. WebMCP provides the exact bridge needed: the webpage hosts a deterministic client-side FinOps calculation engine and exposes typed tools (`get_topology_summary`, `simulate_traffic_and_egress`, `optimize_cloud_architecture`, `apply_enterprise_rate_sheet`, `export_terraform_iac`) directly to the AI agent. The agent reasons about high-level business constraints (e.g. *"keep European response times under 50ms while cutting our AWS bandwidth bill"*), while the client-side WebMCP application guarantees 100% mathematical precision and real-time visual feedback.
 
 ### 2. How does it create a better user experience?
 Instead of an architect manually filling out 50 nested pricing calculator dropdowns or getting surprise $40,000 monthly bills after deployment, they simply interact with their AI co-pilot on a visual canvas. The user can drag and drop compute, database, and edge nodes across world regions, while the AI agent uses WebMCP tools to inject Cloudflare zero-egress edge caching, resolve GDPR cross-border violations, and apply 3-Year Savings Plans—all while updating live monthly cost counters and latency matrices in under 10ms.
@@ -44,14 +44,15 @@ Instead of an architect manually filling out 50 nested pricing calculator dropdo
 
 ### 4. How did you implement WebMCP?
 CloudTopology CPQ implements the WebMCP standard via `src/tools/modelContextBridge.ts`:
-* Registers typed tools on `window.modelContext`, `document.modelContext`, and `navigator.modelContext`.
-* Provides schemas and execution handlers for 7 core FinOps tools:
-  * `list_cloud_regions_and_skus`: Catalog overview across AWS, GCP, Azure, and Cloudflare.
+* Registers 8 typed tools on `window.modelContext`, `document.modelContext`, and `navigator.modelContext`.
+* Provides schemas and execution handlers for 8 core FinOps tools:
+  * `list_cloud_regions_and_skus`: Catalog overview across AWS, GCP, Azure, and Cloudflare with allowed commitment tiers.
   * `get_topology_summary`: Live spend breakdown ($/mo), egress bills, latency metrics, and GDPR audit status.
   * `simulate_traffic_and_egress`: Real-time data transfer simulation across connection links.
   * `validate_compliance_and_latency`: Audits GDPR data residency rules and speed-of-light latencies.
-  * `optimize_cloud_architecture`: Automated FinOps solver for commitment discounts, edge caching, and data sovereignty.
+  * `optimize_cloud_architecture`: Automated FinOps solver for commitment discounts, stateless Spot fleets, edge caching, and data sovereignty.
   * `apply_topology_to_canvas`: DOM and state projection tool modifying the live React Flow graph.
+  * `apply_enterprise_rate_sheet`: Programmatic application of corporate EDAs, custom SKU rates, and blanket discounts.
   * `export_terraform_iac`: Produces deployable Terraform HCL and executive CPQ quotes.
 
 ---
@@ -60,12 +61,13 @@ CloudTopology CPQ implements the WebMCP standard via `src/tools/modelContextBrid
 
 | Tool Name | Type | Description |
 | :--- | :---: | :--- |
-| `list_cloud_regions_and_skus` | `readOnly` | Lists available regions, compute SKUs, database engines, and egress rates across all providers. |
+| `list_cloud_regions_and_skus` | `readOnly` | Lists available regions, compute SKUs, database engines, and egress rates with allowed tier rules. |
 | `get_topology_summary` | `readOnly` | Returns active node graph, monthly spend breakdown, egress bills, and GDPR compliance alerts. |
 | `simulate_traffic_and_egress` | `mutation` | Simulates monthly GB transfer over specific links and computes exact dollar impact. |
 | `validate_compliance_and_latency` | `readOnly` | Audits GDPR data residency rules and fiber-optic network latency matrices. |
-| `optimize_cloud_architecture` | `mutation` | Applies FinOps optimizations (3-Yr Savings Plans, zero-egress edge caching, EU database relocation). |
+| `optimize_cloud_architecture` | `mutation` | Applies FinOps optimizations (3-Yr Savings Plans, Spot stateless compute fleets, edge caching, EU database relocation). |
 | `apply_topology_to_canvas` | `mutation` | Updates the live interactive React Flow topology board in real time. |
+| `apply_enterprise_rate_sheet` | `mutation` | Dynamically overrides catalog rates with Enterprise Discount Agreements (EDA). |
 | `export_terraform_iac` | `readOnly` | Generates validated Terraform HCL code and enterprise CPQ Quote documents. |
 
 ---

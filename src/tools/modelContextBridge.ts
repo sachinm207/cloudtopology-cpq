@@ -6,6 +6,7 @@ import {
 import { CLOUD_REGIONS, RESOURCE_SKUS, PROVIDER_EGRESS_RULES } from '../data/catalog';
 import { evaluateTopology, generateCPQQuote } from '../engine/finopsEngine';
 import { generateTerraformHCL } from '../engine/terraformGenerator';
+import { CustomRateSheet, applyRateSheetToCatalog } from '../engine/rateCardParser';
 
 export interface WebMCPTool {
   name: string;
@@ -113,7 +114,7 @@ export class WebMCPBridge {
     // Tool 1: list_cloud_regions_and_skus
     register({
       name: 'list_cloud_regions_and_skus',
-      description: 'Lists all available cloud regions, compute instances, database engines, and egress rates across AWS, GCP, Azure, and Cloudflare.',
+      description: 'Lists all available cloud regions, compute instances, database engines, and egress rates across AWS, GCP, Azure, and Cloudflare, including allowed commitment and spot tiers.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -147,7 +148,17 @@ export class WebMCPBridge {
           totalRegions: filteredRegions.length,
           regions: filteredRegions,
           totalSKUs: filteredSKUs.length,
-          skus: filteredSKUs,
+          skus: filteredSKUs.map(s => ({
+            id: s.id,
+            name: s.name,
+            provider: s.provider,
+            serviceType: s.serviceType,
+            hourlyPrice: s.hourlyPrice,
+            monthlyPrice: s.monthlyPrice,
+            savingsPlan1YrDiscount: s.savingsPlan1YrDiscount,
+            savingsPlan3YrDiscount: s.savingsPlan3YrDiscount,
+            allowedPricingTiers: s.allowedPricingTiers,
+          })),
           egressRules: PROVIDER_EGRESS_RULES,
         };
       },
@@ -168,16 +179,21 @@ export class WebMCPBridge {
           edgeCount: this.edges.length,
           pricingTier: this.pricingTier,
           costSummary: summary,
-          nodes: this.nodes.map(n => ({
-            id: n.id,
-            label: n.data.label,
-            provider: n.data.provider,
-            region: n.data.regionId,
-            serviceType: n.data.serviceType,
-            skuId: n.data.skuId,
-            instances: n.data.instances,
-            isPII: n.data.isPII,
-          })),
+          nodes: this.nodes.map(n => {
+            const sku = RESOURCE_SKUS.find(s => s.id === n.data.skuId);
+            return {
+              id: n.id,
+              label: n.data.label,
+              provider: n.data.provider,
+              region: n.data.regionId,
+              serviceType: n.data.serviceType,
+              skuId: n.data.skuId,
+              instances: n.data.instances,
+              isPII: n.data.isPII,
+              pricingTier: n.data.pricingTier || this.pricingTier,
+              allowedPricingTiers: sku?.allowedPricingTiers || ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
+            };
+          }),
           edges: this.edges.map(e => ({
             id: e.id,
             source: e.source,
@@ -194,7 +210,7 @@ export class WebMCPBridge {
     // Tool 3: simulate_traffic_and_egress
     register({
       name: 'simulate_traffic_and_egress',
-      description: 'Simulates monthly inter-region data transfer traffic (GB) and computes exact egress bills and latency impact.',
+      description: 'Simulates monthly inter-region data transfer traffic (GB) and computes exact piecewise egress bills and optical latency impact.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -270,13 +286,13 @@ export class WebMCPBridge {
     // Tool 5: optimize_cloud_architecture
     register({
       name: 'optimize_cloud_architecture',
-      description: 'Automatically analyzes the infrastructure and applies FinOps cost-cutting, edge caching, and GDPR compliance fixes.',
+      description: 'Automatically analyzes the infrastructure and applies FinOps cost-cutting, edge caching, Spot optimization for stateless compute, and GDPR compliance fixes.',
       inputSchema: {
         type: 'object',
         properties: {
           strategy: {
             type: 'string',
-            enum: ['cost_cut_savings_plans', 'zero_egress_edge_cache', 'fix_gdpr_compliance', 'all_optimizations'],
+            enum: ['cost_cut_savings_plans', 'spot_stateless_fleet', 'zero_egress_edge_cache', 'fix_gdpr_compliance', 'all_optimizations'],
             description: 'Optimization strategy to apply.',
           },
         },
@@ -290,7 +306,30 @@ export class WebMCPBridge {
 
         if (input.strategy === 'cost_cut_savings_plans' || input.strategy === 'all_optimizations') {
           updatedPricingTier = 'savings_plan_3yr';
-          changesApplied.push('Switched steady-state compute and database nodes to 3-Year Savings Plans (up to 55% discount).');
+          updatedNodes = updatedNodes.map(n => ({
+            ...n,
+            data: {
+              ...n.data,
+              pricingTier: 'savings_plan_3yr',
+            },
+          }));
+          changesApplied.push('Switched eligible compute and database nodes to 3-Year Savings Plans (up to 55% discount).');
+        }
+
+        if (input.strategy === 'spot_stateless_fleet') {
+          updatedNodes = updatedNodes.map(n => {
+            if (n.data.serviceType === 'compute') {
+              changesApplied.push(`Converted compute node (${n.data.label}) to Spot (~65% off).`);
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  pricingTier: 'spot',
+                },
+              };
+            }
+            return n;
+          });
         }
 
         if (input.strategy === 'fix_gdpr_compliance' || input.strategy === 'all_optimizations') {
@@ -392,7 +431,50 @@ export class WebMCPBridge {
       },
     });
 
-    // Tool 7: export_terraform_iac
+    // Tool 7: apply_enterprise_rate_sheet
+    register({
+      name: 'apply_enterprise_rate_sheet',
+      description: 'Applies a custom Enterprise Discount Agreement (EDA), blanket discount percentage, or custom SKU rates to the active FinOps catalog.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          enterpriseName: { type: 'string', description: 'Enterprise agreement name' },
+          blanketDiscountPercent: { type: 'number', description: 'Blanket corporate discount percentage (e.g. 14.5 for 14.5% off)' },
+          customEgressRatePerGb: { type: 'number', description: 'Negotiated custom egress rate ($/GB)' },
+          skuOverrides: {
+            type: 'array',
+            description: 'Custom pricing overrides per SKU ID',
+          },
+        },
+      },
+      execute: async (input: CustomRateSheet) => {
+        const rateSheet: CustomRateSheet = {
+          version: input.version || '1.0',
+          enterpriseName: input.enterpriseName || 'Custom Enterprise EDA',
+          blanketDiscountPercent: input.blanketDiscountPercent || 0,
+          customEgressRatePerGb: input.customEgressRatePerGb,
+          skuOverrides: input.skuOverrides || [],
+        };
+
+        applyRateSheetToCatalog(RESOURCE_SKUS, rateSheet);
+        const newSummary = evaluateTopology(this.nodes, this.edges, this.pricingTier);
+
+        if (this.onTopologyUpdateCallback) {
+          this.onTopologyUpdateCallback(this.nodes, this.edges, this.pricingTier);
+        }
+
+        return {
+          success: true,
+          appliedAgreement: rateSheet.enterpriseName,
+          blanketDiscountPercent: rateSheet.blanketDiscountPercent,
+          skuOverridesCount: rateSheet.skuOverrides?.length || 0,
+          newTotalMonthlySpend: newSummary.totalMonthlySpend,
+          monthlySavingsAchieved: newSummary.totalMonthlySavings,
+        };
+      },
+    });
+
+    // Tool 8: export_terraform_iac
     register({
       name: 'export_terraform_iac',
       description: 'Generates production-ready Terraform HCL infrastructure code and an Enterprise CPQ Quote for the active visual topology.',
