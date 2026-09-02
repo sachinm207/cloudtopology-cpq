@@ -7,7 +7,6 @@ import {
   ShieldAlert, 
   FileCode, 
   FileText, 
-  Sparkles,
   Activity,
   FileJson
 } from 'lucide-react';
@@ -19,7 +18,6 @@ interface HeaderProps {
   onPricingTierChange: (tier: PricingTier) => void;
   onOpenTerraform: () => void;
   onOpenQuote: () => void;
-  onOpenAgent: () => void;
   onOpenRateUpload: () => void;
 }
 
@@ -29,7 +27,6 @@ export const Header: React.FC<HeaderProps> = ({
   onPricingTierChange,
   onOpenTerraform,
   onOpenQuote,
-  onOpenAgent,
   onOpenRateUpload,
 }) => {
   return (
@@ -44,12 +41,12 @@ export const Header: React.FC<HeaderProps> = ({
             <h1 className="font-extrabold text-sm text-gray-100 tracking-tight flex items-center gap-1.5">
               CloudTopology <span className="text-blue-400 font-mono text-xs px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">CPQ</span>
             </h1>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1" title="Connected to WebMCP Model Context (7 Tools Ready)">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              WebMCP Active
+              WebMCP Live (7 Tools)
             </span>
           </div>
-          <p className="text-[11px] text-gray-400">Multi-Cloud FinOps & Latency Architecture Co-Pilot</p>
+          <p className="text-[11px] text-gray-400">Multi-Cloud FinOps & Latency Architecture CPQ</p>
         </div>
       </div>
 
@@ -152,15 +149,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <FileJson className="w-3.5 h-3.5 text-amber-400" />
           <span className="hidden sm:inline">Custom Rates</span>
-        </button>
-
-        {/* AI Co-Pilot / Agent Button */}
-        <button
-          onClick={onOpenAgent}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>AI Co-Pilot</span>
         </button>
 
         {/* Generate Quote */}

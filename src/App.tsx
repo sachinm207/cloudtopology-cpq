@@ -19,7 +19,6 @@ import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { QuoteModal } from './components/QuoteModal';
 import { TerraformModal } from './components/TerraformModal';
-import { AgentSimulator } from './components/AgentSimulator';
 import { RateUploadModal } from './components/RateUploadModal';
 
 import { TopologyNodeData, TopologyEdgeData, PricingTier, CloudProvider, ServiceType } from './types/topology';
@@ -65,7 +64,6 @@ export function App() {
   // Modals state
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [isTerraformOpen, setIsTerraformOpen] = useState(false);
-  const [isAgentOpen, setIsAgentOpen] = useState(true);
   const [isRateUploadOpen, setIsRateUploadOpen] = useState(false);
 
   // Cast nodes and edges for evaluation
@@ -284,7 +282,6 @@ export function App() {
         onPricingTierChange={handleGlobalPricingTierChange}
         onOpenTerraform={() => setIsTerraformOpen(true)}
         onOpenQuote={() => setIsQuoteOpen(true)}
-        onOpenAgent={() => setIsAgentOpen((prev) => !prev)}
         onOpenRateUpload={() => setIsRateUploadOpen(true)}
       />
 
@@ -339,19 +336,10 @@ export function App() {
             <span>•</span>
             <span>⚡ Connect handles to route traffic</span>
             <span>•</span>
-            <span>💬 Ask AI Co-Pilot to optimize</span>
+            <span>🤖 External AI Agents connect via WebMCP</span>
           </div>
         </main>
       </div>
-
-      {/* AI Co-Pilot & WebMCP Inspector Drawer */}
-      <AgentSimulator
-        isOpen={isAgentOpen}
-        onClose={() => setIsAgentOpen(false)}
-        onRefreshTopology={() => {
-          setNodes((nds) => [...nds]);
-        }}
-      />
 
       {/* CPQ Quote Modal */}
       <QuoteModal
