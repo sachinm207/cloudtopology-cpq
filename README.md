@@ -3,13 +3,15 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![WebMCP Standard](https://img.shields.io/badge/WebMCP-Enabled-orange.svg)](#webmcp-implementation)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_App-black.svg)](https://cloudtopology-cpq.vercel.app)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
 [![React Flow](https://img.shields.io/badge/React_Flow-12-FF0072.svg)](https://reactflow.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC.svg)](https://tailwindcss.com/)
 
-> **Devpost Submission Link:** [webmcp.devpost.com](https://webmcp.devpost.com)  
-> **Live Web App:** Testable in the ChatGPT Desktop in-app browser or Google Chrome with `#enable-webmcp-testing`.
+> **🌐 Live Production Web App:** [https://cloudtopology-cpq.vercel.app](https://cloudtopology-cpq.vercel.app)  
+> **📦 GitHub Repository:** [https://github.com/sachinm207/cloudtopology-cpq](https://github.com/sachinm207/cloudtopology-cpq)  
+> **🏆 Devpost Submission:** [webmcp.devpost.com](https://webmcp.devpost.com)  
 
 ---
 
@@ -43,7 +45,58 @@ Instead of an architect manually filling out 50 nested pricing calculator dropdo
 ### 4. How did you implement WebMCP?
 CloudTopology CPQ implements the WebMCP standard via `src/tools/modelContextBridge.ts`:
 * Registers typed tools on `window.modelContext`, `document.modelContext`, and `navigator.modelContext`.
-* Provides schemas and execution handlers for 7 core FinOps tools.
+* Provides schemas and execution handlers for 7 core FinOps tools:
+  * `list_cloud_regions_and_skus`: Catalog overview across AWS, GCP, Azure, and Cloudflare.
+  * `get_topology_summary`: Live spend breakdown ($/mo), egress bills, latency metrics, and GDPR audit status.
+  * `simulate_traffic_and_egress`: Real-time data transfer simulation across connection links.
+  * `validate_compliance_and_latency`: Audits GDPR data residency rules and speed-of-light latencies.
+  * `optimize_cloud_architecture`: Automated FinOps solver for commitment discounts, edge caching, and data sovereignty.
+  * `apply_topology_to_canvas`: DOM and state projection tool modifying the live React Flow graph.
+  * `export_terraform_iac`: Produces deployable Terraform HCL and executive CPQ quotes.
+
+---
+
+## 🛠️ WebMCP Tool Specifications
+
+| Tool Name | Type | Description |
+| :--- | :---: | :--- |
+| `list_cloud_regions_and_skus` | `readOnly` | Lists available regions, compute SKUs, database engines, and egress rates across all providers. |
+| `get_topology_summary` | `readOnly` | Returns active node graph, monthly spend breakdown, egress bills, and GDPR compliance alerts. |
+| `simulate_traffic_and_egress` | `mutation` | Simulates monthly GB transfer over specific links and computes exact dollar impact. |
+| `validate_compliance_and_latency` | `readOnly` | Audits GDPR data residency rules and fiber-optic network latency matrices. |
+| `optimize_cloud_architecture` | `mutation` | Applies FinOps optimizations (3-Yr Savings Plans, zero-egress edge caching, EU database relocation). |
+| `apply_topology_to_canvas` | `mutation` | Updates the live interactive React Flow topology board in real time. |
+| `export_terraform_iac` | `readOnly` | Generates validated Terraform HCL code and enterprise CPQ Quote documents. |
+
+---
+
+## 🔄 Monthly Rate Sync Workflow (GitHub Actions)
+
+* **Workflow File:** `.github/workflows/update_cloud_pricing.yml`
+* **Schedule:** Runs automatically at `00:00 UTC` on the 1st of every month.
+* **Functionality:** Queries official cloud rate APIs, validates schema integrity, executes test suites (`vitest`), and automatically opens a Pull Request with any pricing changes.
+
+---
+
+## 🚀 Quick Start & Local Development
+
+```bash
+# Clone repository
+git clone https://github.com/sachinm207/cloudtopology-cpq.git
+cd cloudtopology-cpq
+
+# Install dependencies
+npm install
+
+# Start local development server
+npm run dev
+
+# Run Vitest test suite
+npm test
+
+# Build for production
+npm run build
+```
 
 ---
 
@@ -58,24 +111,6 @@ docker build -t cloudtopology-cpq:latest .
 
 # Run in isolated corporate staging environment
 docker run -d -p 8080:80 --name cpq-app cloudtopology-cpq:latest
-```
-
----
-
-## 🚀 Quick Start & Local Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start local development server
-npm run dev
-
-# Run Vitest test suite
-npm test
-
-# Build for production
-npm run build
 ```
 
 ---
