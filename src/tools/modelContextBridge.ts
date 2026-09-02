@@ -68,15 +68,29 @@ export class WebMCPBridge {
       getTools: () => Array.from(this.registeredTools.values()),
     };
 
-    if (typeof window !== 'undefined') {
-      window.modelContext = registry;
-      if (typeof document !== 'undefined') {
-        document.modelContext = registry;
+    const bindModelContext = (target: any) => {
+      if (!target) return;
+      try {
+        if (target.modelContext && typeof target.modelContext.registerTool === 'function') {
+          return;
+        }
+        Object.defineProperty(target, 'modelContext', {
+          value: registry,
+          writable: true,
+          configurable: true,
+        });
+      } catch {
+        try {
+          target.modelContext = registry;
+        } catch {
+          // Safely ignored for read-only environments
+        }
       }
-      if (typeof navigator !== 'undefined') {
-        (navigator as any).modelContext = registry;
-      }
-    }
+    };
+
+    if (typeof window !== 'undefined') bindModelContext(window);
+    if (typeof document !== 'undefined') bindModelContext(document);
+    if (typeof navigator !== 'undefined') bindModelContext(navigator);
 
     this.registerAllTools();
   }
@@ -84,8 +98,15 @@ export class WebMCPBridge {
   private registerAllTools() {
     const register = (tool: WebMCPTool) => {
       this.registeredTools.set(tool.name, tool);
-      if (typeof window !== 'undefined' && window.modelContext) {
-        window.modelContext.registerTool(tool);
+      if (typeof document !== 'undefined' && document.modelContext && typeof document.modelContext.registerTool === 'function') {
+        try {
+          document.modelContext.registerTool(tool);
+        } catch {}
+      }
+      if (typeof window !== 'undefined' && window.modelContext && typeof window.modelContext.registerTool === 'function') {
+        try {
+          window.modelContext.registerTool(tool);
+        } catch {}
       }
     };
 
