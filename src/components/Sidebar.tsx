@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Layers, 
   PlusCircle, 
@@ -8,7 +8,9 @@ import {
   Sliders,
   Trash2,
   Tag,
-  Lock
+  Lock,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { TopologyNodeData, CloudProvider, ServiceType, ComplianceViolation, PricingTier } from '../types/topology';
 import { CLOUD_REGIONS, RESOURCE_SKUS } from '../data/catalog';
@@ -31,366 +33,474 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLoadPreset,
   violations,
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'presets' | 'palette' | 'node' | 'compliance'>('presets');
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider>('aws');
   const [selectedService, setSelectedService] = useState<ServiceType>('compute');
+
+  // Auto-expand and switch to inspect tab when a node is clicked on canvas
+  useEffect(() => {
+    if (selectedNode) {
+      setActiveTab('node');
+    }
+  }, [selectedNode]);
 
   // Selected node SKU
   const selectedSku = selectedNode ? RESOURCE_SKUS.find(s => s.id === selectedNode.data.skuId) : null;
   const allowedTiers = selectedSku?.allowedPricingTiers || ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'];
 
   return (
-    <aside className="w-80 border-r border-gray-800/80 bg-[#0B0F19]/95 backdrop-blur-md flex flex-col h-[calc(100vh-4rem)] z-10 select-none">
-      {/* Tab Navigation */}
-      <div className="grid grid-cols-4 border-b border-gray-800 text-xs font-medium">
-        <button
-          onClick={() => setActiveTab('presets')}
-          className={`py-3 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer ${
-            activeTab === 'presets'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Presets</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('palette')}
-          className={`py-3 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer ${
-            activeTab === 'palette'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
-          }`}
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Add Node</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('node')}
-          className={`py-3 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer relative ${
-            activeTab === 'node'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
-          }`}
-        >
-          <Sliders className="w-4 h-4" />
-          <span>Inspect</span>
-          {selectedNode && (
-            <span className="absolute top-2 right-4 w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('compliance')}
-          className={`py-3 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer relative ${
-            activeTab === 'compliance'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4" />
-          <span>Audits</span>
-          {violations.length > 0 && (
-            <span className="absolute top-1.5 right-2 px-1 rounded-full text-[9px] bg-rose-500 text-white font-mono font-bold">
-              {violations.length}
-            </span>
-          )}
-        </button>
-      </div>
+    <aside 
+      className={`border-r border-gray-800/80 bg-[#0B0F19]/95 backdrop-blur-md flex flex-col h-full z-10 select-none transition-all duration-300 ease-in-out relative ${
+        isCollapsed ? 'w-14' : 'w-80'
+      }`}
+    >
+      {/* COLLAPSED STATE: Slim Icon Rail */}
+      {isCollapsed ? (
+        <div className="flex flex-col items-center py-3 h-full justify-between">
+          <div className="flex flex-col items-center gap-4 w-full">
+            {/* Expand Toggle Button */}
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="p-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-blue-400 hover:text-blue-300 transition-all cursor-pointer border border-gray-800 shadow-md"
+              title="Expand Sidebar (Shift+E)"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+            </button>
 
-      {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* PRESETS TAB */}
-        {activeTab === 'presets' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">Architecture Templates</h2>
-              <span className="text-[10px] text-blue-400 font-mono">1-Click Load</span>
-            </div>
-            
-            {ARCHITECTURE_PRESETS.map((preset) => (
-              <div
-                key={preset.id}
-                onClick={() => onLoadPreset(preset)}
-                className="group p-3 rounded-xl bg-gray-900/60 hover:bg-gray-800/80 border border-gray-800 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-xs font-bold text-gray-100 group-hover:text-blue-400 transition-colors">
-                    {preset.name}
-                  </h3>
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-                </div>
-                <p className="text-[11px] text-gray-400 leading-tight mb-2">{preset.tagline}</p>
-                <div className="flex items-center gap-2 text-[10px] text-gray-500 font-mono">
-                  <span>{preset.nodes.length} nodes</span>
-                  <span>•</span>
-                  <span>{preset.edges.length} edges</span>
-                  <span>•</span>
-                  <span className="text-emerald-400 font-semibold">{preset.pricingTier}</span>
-                </div>
-              </div>
-            ))}
+            <div className="w-8 h-px bg-gray-800/80 my-1"></div>
+
+            {/* Presets Icon */}
+            <button
+              onClick={() => { setActiveTab('presets'); setIsCollapsed(false); }}
+              className={`p-2.5 rounded-xl transition-all cursor-pointer relative group ${
+                activeTab === 'presets' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40' : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+              }`}
+              title="Architecture Presets"
+            >
+              <Layers className="w-4 h-4" />
+            </button>
+
+            {/* Add Node Icon */}
+            <button
+              onClick={() => { setActiveTab('palette'); setIsCollapsed(false); }}
+              className={`p-2.5 rounded-xl transition-all cursor-pointer relative group ${
+                activeTab === 'palette' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40' : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+              }`}
+              title="Add Node"
+            >
+              <PlusCircle className="w-4 h-4" />
+            </button>
+
+            {/* Inspect Node Icon */}
+            <button
+              onClick={() => { setActiveTab('node'); setIsCollapsed(false); }}
+              className={`p-2.5 rounded-xl transition-all cursor-pointer relative group ${
+                activeTab === 'node' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40' : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+              }`}
+              title="Inspect Selected Node"
+            >
+              <Sliders className="w-4 h-4" />
+            </button>
+
+            {/* Compliance Audits Icon */}
+            <button
+              onClick={() => { setActiveTab('compliance'); setIsCollapsed(false); }}
+              className={`p-2.5 rounded-xl transition-all cursor-pointer relative group ${
+                activeTab === 'compliance' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40' : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+              }`}
+              title="Compliance & GDPR Audits"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              {violations.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-gray-950 animate-pulse"></span>
+              )}
+            </button>
           </div>
-        )}
 
-        {/* ADD NODE PALETTE */}
-        {activeTab === 'palette' && (
-          <div className="space-y-4">
-            <div>
-              <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
-                1. Select Cloud Provider
-              </label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(['aws', 'gcp', 'azure', 'cloudflare'] as CloudProvider[]).map((prov) => (
-                  <button
-                    key={prov}
-                    onClick={() => setSelectedProvider(prov)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium border text-left transition-all cursor-pointer ${
-                      selectedProvider === prov
-                        ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                        : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800'
-                    }`}
-                  >
-                    {prov.toUpperCase()}
-                  </button>
-                ))}
+          {/* Quick Collapse Hint */}
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="text-[9px] font-mono text-gray-500 hover:text-gray-300 writing-vertical py-2"
+            title="Click to expand"
+          >
+            EXPAND
+          </button>
+        </div>
+      ) : (
+        /* EXPANDED STATE: Full Tabs & Content */
+        <>
+          {/* Header Strip with Collapse Button */}
+          <div className="px-3 py-2 border-b border-gray-800/80 bg-gray-950/50 flex items-center justify-between text-xs">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-gray-400">
+              Navigation & Tools
+            </span>
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="p-1 rounded-md bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-all cursor-pointer border border-gray-800"
+              title="Collapse Sidebar for extra canvas space"
+            >
+              <PanelLeftClose className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="grid grid-cols-4 border-b border-gray-800 text-xs font-medium bg-gray-950/20">
+            <button
+              onClick={() => setActiveTab('presets')}
+              className={`py-2.5 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer ${
+                activeTab === 'presets'
+                  ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span className="text-[11px]">Presets</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('palette')}
+              className={`py-2.5 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer ${
+                activeTab === 'palette'
+                  ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span className="text-[11px]">Add Node</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('node')}
+              className={`py-2.5 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer ${
+                activeTab === 'node'
+                  ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span className="text-[11px]">Inspect</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('compliance')}
+              className={`py-2.5 flex flex-col items-center gap-1 transition-colors border-b-2 cursor-pointer relative ${
+                activeTab === 'compliance'
+                  ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="text-[11px]">Audits</span>
+              {violations.length > 0 && (
+                <span className="absolute top-1.5 right-4 w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              )}
+            </button>
+          </div>
+
+          {/* Tab 1: Architecture Presets */}
+          {activeTab === 'presets' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+                <span className="font-semibold uppercase tracking-wider text-[10px]">Architecture Templates</span>
+                <span className="text-[10px] font-mono text-blue-400">1-Click Load</span>
               </div>
+              {ARCHITECTURE_PRESETS.map((preset) => (
+                <div
+                  key={preset.id}
+                  onClick={() => onLoadPreset(preset)}
+                  className="p-3.5 rounded-xl border border-gray-800/80 bg-gray-900/50 hover:bg-gray-800/50 hover:border-blue-500/40 cursor-pointer transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <h3 className="font-bold text-xs text-gray-200 group-hover:text-blue-400 transition-colors">
+                      {preset.name}
+                    </h3>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-blue-400 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                  <p className="text-[11px] text-gray-400 leading-relaxed mb-2.5">
+                    {preset.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500">
+                    <span>{preset.nodes.length} nodes</span>
+                    <span>•</span>
+                    <span>{preset.edges.length} edges</span>
+                    <span>•</span>
+                    <span className="text-emerald-400 font-semibold">{preset.pricingTier}</span>
+                  </div>
+                </div>
+              ))}
             </div>
+          )}
 
-            <div>
-              <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
-                2. Select Service Category
-              </label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(['compute', 'database', 'storage', 'cdn_edge'] as ServiceType[]).map((serv) => (
-                  <button
-                    key={serv}
-                    onClick={() => setSelectedService(serv)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium border text-left capitalize transition-all cursor-pointer ${
-                      selectedService === serv
-                        ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                        : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800'
-                    }`}
-                  >
-                    {serv.replace('_', ' ')}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
-                3. Available Catalog SKUs
-              </label>
-              <div className="space-y-2">
-                {RESOURCE_SKUS.filter(
-                  (s) => s.provider === selectedProvider && s.serviceType === selectedService
-                ).map((sku) => {
-                  const defaultRegion = Object.keys(CLOUD_REGIONS).find(
-                    (r) => CLOUD_REGIONS[r].provider === selectedProvider
-                  ) || 'aws-us-east-1';
-
-                  return (
-                    <div
-                      key={sku.id}
-                      onClick={() => onAddNode(selectedProvider, selectedService, sku.id, defaultRegion)}
-                      className="p-2.5 rounded-lg bg-gray-900/80 border border-gray-800 hover:border-emerald-500/50 transition-all cursor-pointer hover:bg-gray-800"
+          {/* Tab 2: Add Node Palette */}
+          {activeTab === 'palette' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Provider Selection */}
+              <div>
+                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-2">
+                  1. Cloud Provider
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(['aws', 'gcp', 'azure', 'cloudflare'] as CloudProvider[]).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setSelectedProvider(p)}
+                      className={`px-3 py-2 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer border ${
+                        selectedProvider === p
+                          ? 'bg-blue-600/20 border-blue-500 text-blue-300 shadow-sm'
+                          : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800'
+                      }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-bold text-gray-200">{sku.name}</span>
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          ${Math.round(sku.monthlyPrice)}/mo
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Service Type Selection */}
+              <div>
+                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-2">
+                  2. Service Category
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['compute', 'database', 'storage'] as ServiceType[]).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setSelectedService(s)}
+                      className={`px-2 py-1.5 rounded-lg text-xs font-medium capitalize transition-all cursor-pointer border ${
+                        selectedService === s
+                          ? 'bg-blue-600/20 border-blue-500 text-blue-300'
+                          : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SKU List to Click & Add */}
+              <div>
+                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-2">
+                  3. Select Resource SKU to Place
+                </label>
+                <div className="space-y-2">
+                  {RESOURCE_SKUS.filter(
+                    (sku) => sku.provider === selectedProvider && sku.serviceType === selectedService
+                  ).map((sku) => {
+                    const defaultRegion = Object.keys(CLOUD_REGIONS).find((r) => r.startsWith(selectedProvider)) || 'aws-us-east-1';
+                    return (
+                      <div
+                        key={sku.id}
+                        onClick={() => onAddNode(selectedProvider, selectedService, sku.id, defaultRegion)}
+                        className="p-3 rounded-xl border border-gray-800/80 bg-gray-900/40 hover:bg-gray-800/60 hover:border-blue-500/40 cursor-pointer transition-all group flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="text-xs font-bold text-gray-200 group-hover:text-blue-400">
+                            {sku.name}
+                          </div>
+                          <div className="text-[10px] text-gray-400 font-mono mt-0.5">
+                            ${sku.hourlyPrice.toFixed(4)}/hr • ${sku.monthlyPrice.toLocaleString()}/mo
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                          + Add
                         </span>
                       </div>
-                      <p className="text-[10px] text-gray-400 line-clamp-2">{sku.description}</p>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* NODE INSPECTOR */}
-        {activeTab === 'node' && (
-          <div>
-            {selectedNode ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-800">
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-100">{selectedNode.data.label}</h3>
-                    <p className="text-[10px] font-mono text-gray-400">Node ID: {selectedNode.id}</p>
+          {/* Tab 3: Inspect Selected Node */}
+          {activeTab === 'node' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {selectedNode ? (
+                <>
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-800">
+                    <div>
+                      <h3 className="font-bold text-sm text-gray-100">{selectedNode.data.label}</h3>
+                      <p className="text-[10px] font-mono text-gray-400 uppercase">{selectedNode.data.provider} • {selectedNode.data.serviceType}</p>
+                    </div>
+                    <button
+                      onClick={() => onDeleteNode(selectedNode.id)}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-all cursor-pointer"
+                      title="Delete Node"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => onDeleteNode(selectedNode.id)}
-                    className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all cursor-pointer"
-                    title="Delete Node"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
 
-                {/* Node Label */}
-                <div>
-                  <label className="text-[11px] font-medium text-gray-400 block mb-1">Node Label</label>
-                  <input
-                    type="text"
-                    value={selectedNode.data.label}
-                    onChange={(e) => onUpdateNode(selectedNode.id, { label: e.target.value })}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* Region Selector */}
-                <div>
-                  <label className="text-[11px] font-medium text-gray-400 block mb-1">Cloud Region</label>
-                  <select
-                    value={selectedNode.data.regionId}
-                    onChange={(e) => onUpdateNode(selectedNode.id, { regionId: e.target.value })}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500"
-                  >
-                    {Object.values(CLOUD_REGIONS).map((reg) => (
-                      <option key={reg.id} value={reg.id}>
-                        {reg.name} {reg.isEU ? '🇪🇺 (EU GDPR)' : '🌐'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Restricted Per-Node FinOps Pricing Tier Selector */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-medium text-gray-400 flex items-center gap-1">
-                      <Tag className="w-3 h-3 text-emerald-400" /> Pricing Commitment Tier
+                  {/* Node Label */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">
+                      Resource Name
                     </label>
-                    {!allowedTiers.includes('spot') && (
-                      <span className="text-[9px] font-mono text-amber-400/80 flex items-center gap-0.5" title="Databases & storage do not support Spot instances">
-                        <Lock className="w-2.5 h-2.5" /> No Spot (Stateful)
-                      </span>
-                    )}
-                  </div>
-                  <select
-                    value={selectedNode.data.pricingTier || 'on_demand'}
-                    onChange={(e) => onUpdateNode(selectedNode.id, { pricingTier: e.target.value as PricingTier })}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="on_demand">On-Demand (0% Baseline)</option>
-                    {allowedTiers.includes('savings_plan_1yr') && (
-                      <option value="savings_plan_1yr">1-Yr Savings Plan (~35% off)</option>
-                    )}
-                    {allowedTiers.includes('savings_plan_3yr') && (
-                      <option value="savings_plan_3yr">3-Yr Savings Plan (~55% off)</option>
-                    )}
-                    {allowedTiers.includes('spot') && (
-                      <option value="spot">Spot Instances (~65% off)</option>
-                    )}
-                  </select>
-                </div>
-
-                {/* Instances Scale */}
-                {selectedNode.data.serviceType === 'compute' && (
-                  <div>
-                    <div className="flex justify-between items-center text-[11px] font-medium text-gray-400 mb-1">
-                      <span>Instances Count</span>
-                      <span className="font-mono text-blue-400 font-bold">{selectedNode.data.instances}</span>
-                    </div>
                     <input
-                      type="range"
-                      min={1}
-                      max={32}
-                      value={selectedNode.data.instances}
-                      onChange={(e) => onUpdateNode(selectedNode.id, { instances: parseInt(e.target.value) })}
-                      className="w-full accent-blue-500"
+                      type="text"
+                      value={selectedNode.data.label}
+                      onChange={(e) => onUpdateNode(selectedNode.id, { label: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-gray-900 border border-gray-800 rounded-lg text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500"
                     />
                   </div>
-                )}
 
-                {/* Storage Capacity Slider */}
-                {selectedNode.data.serviceType === 'storage' && (
+                  {/* Region Selection */}
                   <div>
-                    <div className="flex justify-between items-center text-[11px] font-medium text-gray-400 mb-1">
-                      <span>Allocated Storage</span>
-                      <span className="font-mono text-emerald-400 font-bold">
-                        {((selectedNode.data.allocatedStorageGb || 1000) / 1000).toFixed(1)} TB
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">
+                      Geographic Region
+                    </label>
+                    <select
+                      value={selectedNode.data.regionId}
+                      onChange={(e) => onUpdateNode(selectedNode.id, { regionId: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-gray-900 border border-gray-800 rounded-lg text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500"
+                    >
+                      {Object.values(CLOUD_REGIONS)
+                        .filter((r) => r.provider === selectedNode.data.provider || selectedNode.data.provider === 'cloudflare')
+                        .map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name} ({r.city}) {r.isEU ? '🇪🇺 EU' : ''}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Instance Count */}
+                  {selectedNode.data.serviceType !== 'storage' && (
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                          Instance Scale
+                        </label>
+                        <span className="text-xs font-mono font-bold text-blue-400">
+                          {selectedNode.data.instances || 1} {((selectedNode.data.instances || 1) > 1 ? 'nodes' : 'node')}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="32"
+                        value={selectedNode.data.instances || 1}
+                        onChange={(e) => onUpdateNode(selectedNode.id, { instances: parseInt(e.target.value) })}
+                        className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Allocated Storage */}
+                  {selectedNode.data.serviceType === 'storage' && (
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                          Allocated Storage
+                        </label>
+                        <span className="text-xs font-mono font-bold text-blue-400">
+                          {((selectedNode.data.allocatedStorageGb || 1000) / 1000).toFixed(1)} TB
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="500"
+                        max="50000"
+                        step="500"
+                        value={selectedNode.data.allocatedStorageGb || 1000}
+                        onChange={(e) => onUpdateNode(selectedNode.id, { allocatedStorageGb: parseInt(e.target.value) })}
+                        className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Per-Node Pricing Commitment Plan */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Tag className="w-3 h-3 text-emerald-400" />
+                        Pricing Commitment Tier
                       </span>
+                      {!allowedTiers.includes('spot') && (
+                        <span className="text-[9px] text-amber-400 flex items-center gap-0.5 font-normal">
+                          <Lock className="w-2.5 h-2.5" /> No Spot (Stateful)
+                        </span>
+                      )}
+                    </label>
+                    <select
+                      value={selectedNode.data.pricingTier || 'on_demand'}
+                      onChange={(e) => onUpdateNode(selectedNode.id, { pricingTier: e.target.value as PricingTier })}
+                      className="w-full px-3 py-1.5 bg-gray-900 border border-gray-800 rounded-lg text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      {allowedTiers.includes('on_demand') && (
+                        <option value="on_demand">On-Demand (0% Baseline)</option>
+                      )}
+                      {allowedTiers.includes('savings_plan_1yr') && (
+                        <option value="savings_plan_1yr">1-Yr Savings Plan (~32% off)</option>
+                      )}
+                      {allowedTiers.includes('savings_plan_3yr') && (
+                        <option value="savings_plan_3yr">3-Yr Savings Plan (~55% off)</option>
+                      )}
+                      {allowedTiers.includes('spot') ? (
+                        <option value="spot">Spot Instances (~65% off)</option>
+                      ) : (
+                        <option disabled value="spot">🔒 Spot (Not allowed for Stateful)</option>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* GDPR PII Toggle */}
+                  <div className="p-3 rounded-xl bg-gray-900/60 border border-gray-800 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-gray-200">Contains Customer PII</div>
+                      <div className="text-[10px] text-gray-400">Triggers strict GDPR data residency audit</div>
                     </div>
                     <input
-                      type="range"
-                      min={100}
-                      max={100000}
-                      step={500}
-                      value={selectedNode.data.allocatedStorageGb || 1000}
-                      onChange={(e) => onUpdateNode(selectedNode.id, { allocatedStorageGb: parseInt(e.target.value) })}
-                      className="w-full accent-emerald-500"
+                      type="checkbox"
+                      checked={!!selectedNode.data.isPII}
+                      onChange={(e) => onUpdateNode(selectedNode.id, { isPII: e.target.checked })}
+                      className="w-4 h-4 rounded bg-gray-800 border-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                   </div>
-                )}
-
-                {/* GDPR PII Switch */}
-                <div className="p-3 rounded-lg bg-gray-900/60 border border-gray-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-semibold text-gray-200 block">Contains PII / Customer Data</span>
-                    <span className="text-[10px] text-gray-400">Enforces EU GDPR data residency check</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={selectedNode.data.isPII}
-                    onChange={(e) => onUpdateNode(selectedNode.id, { isPII: e.target.checked })}
-                    className="w-4 h-4 accent-rose-500 rounded cursor-pointer"
-                  />
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 text-center p-4">
+                  <Sliders className="w-8 h-8 text-gray-600 mb-2" />
+                  <p className="text-xs text-gray-400">Click any node on the canvas to inspect its configuration.</p>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Sliders className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                <p className="text-xs font-medium">No node selected.</p>
-                <p className="text-[11px]">Click on any node in the topology canvas to inspect or adjust parameters.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* COMPLIANCE & AUDIT TAB */}
-        {activeTab === 'compliance' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Compliance & FinOps Audits</h3>
-              <span className="text-[10px] font-mono text-rose-400">{violations.length} Alerts</span>
+              )}
             </div>
+          )}
 
-            {violations.length === 0 ? (
-              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-center">
-                <ShieldCheck className="w-8 h-8 mx-auto mb-2 text-emerald-400" />
-                <h4 className="text-xs font-bold mb-1">Architecture 100% Compliant</h4>
-                <p className="text-[11px] text-emerald-400/80">No GDPR data residency violations, egress spikes, or security issues detected.</p>
+          {/* Tab 4: Compliance & Audits */}
+          {activeTab === 'compliance' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider text-[10px]">
+                Active Architecture Audits
               </div>
-            ) : (
-              violations.map((v) => (
-                <div
-                  key={v.id}
-                  className={`p-3 rounded-xl border text-xs space-y-1.5 ${
-                    v.severity === 'critical'
-                      ? 'bg-rose-950/40 border-rose-500/40 text-rose-200'
-                      : 'bg-amber-950/30 border-amber-500/30 text-amber-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold">{v.title}</span>
-                    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded uppercase ${
-                      v.severity === 'critical' ? 'bg-rose-500/30 text-rose-300' : 'bg-amber-500/30 text-amber-300'
-                    }`}>
-                      {v.severity}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-300 leading-snug">{v.description}</p>
-                  <div className="pt-1 text-[10px] text-blue-300">
-                    💡 <span className="font-semibold">Fix:</span> {v.recommendation}
-                  </div>
+              {violations.length === 0 ? (
+                <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-center space-y-2">
+                  <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
+                  <div className="text-xs font-bold text-emerald-300">100% Policy Compliant</div>
+                  <p className="text-[10px] text-gray-400 leading-relaxed">
+                    No GDPR data residency violations, high egress anomalies, or unencrypted link transfers detected.
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+              ) : (
+                violations.map((v, i) => (
+                  <div
+                    key={i}
+                    className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 space-y-1.5"
+                  >
+                    <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                      <span>{v.category.replace(/_/g, ' ')}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-300 leading-relaxed">{v.description}</p>
+                    <div className="text-[10px] font-mono text-amber-400/80 bg-amber-950/40 p-2 rounded-lg border border-amber-500/20 mt-1">
+                      💡 {v.recommendation}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </>
+      )}
     </aside>
   );
 };
