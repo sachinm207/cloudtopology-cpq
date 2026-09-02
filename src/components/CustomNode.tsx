@@ -56,9 +56,11 @@ export const CustomNode = memo((props: any) => {
   const region = CLOUD_REGIONS[data.regionId || 'aws-us-east-1'];
   const sku = RESOURCE_SKUS.find((s) => s.id === data.skuId);
 
-  // Dynamic cost calculation based on active pricing tier
-  const tier = data.pricingTier || 'on_demand';
-  const tierInfo = planLabels[tier] || planLabels.on_demand;
+  // Dynamic cost calculation with allowed tier enforcement
+  const requestedTier = data.pricingTier || 'on_demand';
+  const allowed = sku?.allowedPricingTiers || ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'];
+  const effectiveTier = allowed.includes(requestedTier) ? requestedTier : (allowed.includes('savings_plan_1yr') ? 'savings_plan_1yr' : 'on_demand');
+  const tierInfo = planLabels[effectiveTier] || planLabels.on_demand;
 
   let basePrice = sku?.monthlyPrice || 100;
   if (data.serviceType === 'storage' && data.allocatedStorageGb) {
@@ -67,9 +69,9 @@ export const CustomNode = memo((props: any) => {
   const onDemandTotal = basePrice * (data.instances || 1);
 
   let discount = 0;
-  if (tier === 'savings_plan_1yr') discount = sku?.savingsPlan1YrDiscount || 0.32;
-  else if (tier === 'savings_plan_3yr') discount = sku?.savingsPlan3YrDiscount || 0.55;
-  else if (tier === 'spot') discount = 0.65;
+  if (effectiveTier === 'savings_plan_1yr') discount = sku?.savingsPlan1YrDiscount || 0.32;
+  else if (effectiveTier === 'savings_plan_3yr') discount = sku?.savingsPlan3YrDiscount || 0.55;
+  else if (effectiveTier === 'spot') discount = 0.65;
 
   const dynamicMonthlyCost = Math.round(onDemandTotal * (1 - discount));
 
@@ -138,7 +140,7 @@ export const CustomNode = memo((props: any) => {
             <Tag className="w-2.5 h-2.5" /> Plan:
           </span>
           <span className={`font-mono text-[9px] px-1.5 py-0.2 rounded border font-semibold ${tierInfo.bg}`}>
-            {tier === 'on_demand' ? 'On-Demand' : tier === 'savings_plan_1yr' ? '1-Yr SP' : tier === 'savings_plan_3yr' ? '3-Yr SP' : 'Spot'}
+            {effectiveTier === 'on_demand' ? 'On-Demand' : effectiveTier === 'savings_plan_1yr' ? '1-Yr SP' : effectiveTier === 'savings_plan_3yr' ? '3-Yr SP' : 'Spot'}
           </span>
         </div>
       </div>

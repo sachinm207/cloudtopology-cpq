@@ -46,12 +46,8 @@ export function calculateNetworkLatencyMs(regionAId: string, regionBId: string, 
   }
 
   const distanceKm = calculateGeodesicDistanceKm(regionA.lat, regionA.lng, regionB.lat, regionB.lng);
-  
-  // Optical fiber propagation speed in silica glass: ~200 km/ms
-  // Round trip = 2 * distance / 200 = distance / 100
   const fiberPropagationMs = (2 * distanceKm) / 200;
   
-  // Overhead penalty based on connection type
   let overheadMs = 8.0;
   if (connectionType === 'direct_connect') overheadMs = 3.0;
   else if (connectionType === 'vpc_peering') overheadMs = 5.0;
@@ -141,18 +137,21 @@ export function evaluateTopology(
 
     let baseMonthlyUnit = sku.monthlyPrice;
     
-    // Apply storage / instance scaling
     if (data.serviceType === 'storage' && data.allocatedStorageGb) {
       baseMonthlyUnit = (data.allocatedStorageGb / 1000) * baseMonthlyUnit;
     }
     const nodeOnDemandMonthly = baseMonthlyUnit * (data.instances || 1);
     onDemandBaseline += nodeOnDemandMonthly;
 
-    // Apply active pricing discount plan
+    // Enforce allowed pricing tiers per SKU
+    const requestedTier = data.pricingTier || pricingTier;
+    const allowed = sku.allowedPricingTiers || ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'];
+    const effectiveTier = allowed.includes(requestedTier) ? requestedTier : (allowed.includes('savings_plan_1yr') ? 'savings_plan_1yr' : 'on_demand');
+
     let discount = 0;
-    if (pricingTier === 'savings_plan_1yr') discount = sku.savingsPlan1YrDiscount;
-    else if (pricingTier === 'savings_plan_3yr') discount = sku.savingsPlan3YrDiscount;
-    else if (pricingTier === 'spot') discount = 0.65;
+    if (effectiveTier === 'savings_plan_1yr') discount = sku.savingsPlan1YrDiscount;
+    else if (effectiveTier === 'savings_plan_3yr') discount = sku.savingsPlan3YrDiscount;
+    else if (effectiveTier === 'spot') discount = 0.65;
 
     const actualMonthly = nodeOnDemandMonthly * (1 - discount);
 
@@ -161,7 +160,6 @@ export function evaluateTopology(
     else if (data.serviceType === 'storage') storageSpend += actualMonthly;
     else if (data.serviceType === 'cdn_edge') edgeSpend += actualMonthly;
 
-    // Carbon Footprint: kWh estimate ~ vCPU * 0.035 kW * 730 hrs
     const vCPU = sku.vCPU || 2;
     const estimatedMonthlyKwh = vCPU * 0.035 * 730 * (data.instances || 1);
     const regionCarbonIntensity = region?.carbonIntensity || 300;
@@ -195,7 +193,6 @@ export function evaluateTopology(
     );
     latencies.push(latency);
 
-    // Egress spike check
     if (cost > 1000) {
       violations.push({
         id: `egress-${edge.id}`,
@@ -242,7 +239,6 @@ export function evaluateTopology(
     }
   }
 
-  // Latency Metrics
   latencies.sort((a, b) => a - b);
   const avgLatency = latencies.length > 0 ? latencies.reduce((a, b) => a + b, 0) / latencies.length : 15.0;
   const p95Latency = latencies.length > 0 ? latencies[Math.floor(latencies.length * 0.95)] || latencies[latencies.length - 1] : 25.0;
@@ -290,10 +286,14 @@ export function generateCPQQuote(
       basePrice = (node.data.allocatedStorageGb / 1000) * basePrice;
     }
     
+    const requestedTier = node.data.pricingTier || pricingTier;
+    const allowed = sku?.allowedPricingTiers || ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'];
+    const effectiveTier = allowed.includes(requestedTier) ? requestedTier : (allowed.includes('savings_plan_1yr') ? 'savings_plan_1yr' : 'on_demand');
+
     let discount = 0;
-    if (pricingTier === 'savings_plan_1yr') discount = sku?.savingsPlan1YrDiscount || 0;
-    else if (pricingTier === 'savings_plan_3yr') discount = sku?.savingsPlan3YrDiscount || 0;
-    else if (pricingTier === 'spot') discount = 0.65;
+    if (effectiveTier === 'savings_plan_1yr') discount = sku?.savingsPlan1YrDiscount || 0;
+    else if (effectiveTier === 'savings_plan_3yr') discount = sku?.savingsPlan3YrDiscount || 0;
+    else if (effectiveTier === 'spot') discount = 0.65;
 
     const monthlyTotal = Math.round(basePrice * qty * (1 - discount) * 100) / 100;
 

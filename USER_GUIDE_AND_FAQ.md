@@ -1,4 +1,4 @@
-# CloudTopology CPQ: Comprehensive User Guide, Target Personas & Architecture FAQ 📘
+# CloudTopology CPQ: Comprehensive User Guide, Target Personas & Technical FAQ 📘
 
 ---
 
@@ -22,26 +22,68 @@
 
 ---
 
-## 2. ⚡ Precision & Accuracy: CPQ & Terraform HCL
+## 2. 🛡️ Spot & Savings Plan Restrictions per Resource Type
 
-### Is the CPQ Pricing Accurate?
-**Yes — 100% deterministic arithmetic based on verified cloud rate cards:**
-* **Compute, Database & Storage SKUs:** Normalized to 730 operating hours per calendar month based on official AWS, GCP, Azure, and Cloudflare pricing.
-* **Tiered Egress Bandwidth Pricing:** Implements exact piecewise billing brackets:
-  * *Internet Public Egress (AWS/GCP/Azure):* First 10 TB at $0.090–$0.120/GB $\rightarrow$ Next 40 TB at $0.080–$0.110/GB $\rightarrow$ Next 100 TB at $0.070–$0.080/GB.
-  * *Inter-Zone (Same Region):* $0.01/GB.
-  * *Cross-Region (Same Provider Backbone):* $0.02/GB.
-  * *Cloudflare Bandwidth Alliance / Zero Egress:* $0.00/GB.
-* **Commitment Discount Modeling:** Real-world published discount percentages (1-Year Savings Plans: 28–38% off; 3-Year Reserved: 50–62% off; Spot: 65% off).
+Not every cloud service supports Spot instances or 3-Year Savings Plans:
 
-### Is the Generated Terraform Code Accurate?
-**Yes — Produces syntactically valid HCL 2.0 (OpenTofu 1.6+ & Terraform 1.5+):**
-* Valid `terraform {}` configuration block with provider declarations (`hashicorp/aws`, `hashicorp/google`, `hashicorp/azurerm`, `cloudflare/cloudflare`).
-* Resources populated with actual instance types (`c6i.2xlarge`, `t4g.xlarge`, `g5.2xlarge`), multi-AZ Aurora clusters with serverless v2 scaling, encrypted S3 buckets, and VPC peering connections.
+| Service Category | Spot Instances | 1-Yr Savings Plan | 3-Yr Savings Plan | Technical Rationale |
+| :--- | :---: | :---: | :---: | :--- |
+| **Compute (EC2, GCE, Azure VMs)** | ✅ Supported | ✅ Supported | ✅ Supported | Stateless; can be safely terminated with 2-min notice. |
+| **Databases (Aurora, Cloud SQL)** | ❌ **Forbidden** | ✅ Supported | ✅ Supported | Stateful ACID storage; abrupt termination causes database corruption. |
+| **Object Storage (S3, R2)** | ❌ **Forbidden** | ⚠️ Volume Contract | ⚠️ Volume Contract | Billed on gigabyte-months stored, not compute cores. |
+| **Edge CDN (Workers, CloudFront)** | ❌ **Forbidden** | ✅ Supported | ✅ Supported | Serverless request-based execution at edge point-of-presence. |
+
+* **Automated Guardrails:** When a user inspects a Database node, Spot options are automatically locked with a `🔒 No Spot (Stateful)` indicator. If a global Spot simulation is triggered, databases gracefully fallback to their highest eligible commitment plan.
 
 ---
 
-## 3. 📊 Understanding Connection Edge Labels (`8.3 TB | $0/mo | 8.5ms`)
+## 3. 📂 Custom Enterprise Rate Sheets (EDAs / PPAs)
+
+### Why Uploading Confidential Rate Cards is 100% Safe:
+* **Zero Backend Servers:** The app runs **100% inside your browser's RAM** (Client-Side SPA). No files are uploaded to any external server.
+* **Standard Compatible Schema (`custom_rates.json`):**
+```json
+{
+  "version": "1.0",
+  "enterpriseName": "Acme Corp Private Pricing Addendum",
+  "blanketDiscountPercent": 14.5,
+  "customEgressRatePerGb": 0.045,
+  "skuOverrides": [
+    {
+      "skuId": "aws-ec2-c6i-2xlarge",
+      "customHourlyPrice": 0.285,
+      "customSavingsPlan1YrDiscount": 0.40,
+      "customSavingsPlan3YrDiscount": 0.62
+    },
+    {
+      "skuId": "aws-rds-aurora-postgres-large",
+      "customHourlyPrice": 0.750,
+      "customSavingsPlan1YrDiscount": 0.35,
+      "customSavingsPlan3YrDiscount": 0.52
+    }
+  ]
+}
+```
+
+---
+
+## 4. 🏢 Air-Gapped Private VPC Deployment
+
+For defense, healthcare, and enterprise banking environments with zero outbound internet access:
+1. **Self-Contained Bundle:** All cloud rates, egress rules, and icons are bundled in the local distribution.
+2. **Docker Container Deployment:**
+```bash
+# Build standalone air-gapped container
+docker build -t cloudtopology-cpq:latest .
+
+# Run inside isolated corporate VPC (zero internet required)
+docker run -d -p 8080:80 --name cpq-app cloudtopology-cpq:latest
+```
+3. Open `http://<internal-vpc-ip>:8080/` on your corporate intranet.
+
+---
+
+## 5. 📊 Understanding Connection Edge Labels (`8.3 TB | $0/mo | 8.5ms`)
 
 Each animated line connecting two nodes represents a live network path with three real-time telemetry metrics:
 
@@ -61,32 +103,3 @@ Each animated line connecting two nodes represents a live network path with thre
    * **Why `$153/mo`?** If data flows across the public internet from AWS Frankfurt to AWS US, AWS charges public internet egress rates.
 3. **Network Latency (`8.5ms` vs `78.4ms`):**
    * The physical round-trip propagation time ($RTT$) for data packets traveling over transatlantic/transpacific fiber-optic glass cables ($c / 1.52 \approx 200,\!000\text{ km/s}$) plus router switching overhead.
-
----
-
-## 4. 💰 Understanding Commitment Plan Dropdowns
-
-Cloud providers charge significantly different rates depending on enterprise payment commitments:
-
-| Plan Option | Discount Level | Best Used For |
-| :--- | :---: | :--- |
-| **On-Demand** | **0% (Baseline)** | Unpredictable workloads, new prototypes, or short-lived experiments. |
-| **1-Yr Savings Plan** | **~28% – 35% Off** | Steady-state production services with a 1-year corporate budget horizon. |
-| **3-Yr Savings Plan** | **~50% – 62% Off** | Core enterprise databases and primary API clusters committed for 3 years (maximum FinOps ROI). |
-| **Spot Instances** | **~65% – 70% Off** | Fault-tolerant batch processing, video encoding, and AI training pipelines that can tolerate interruptions. |
-
----
-
-## 5. 🌐 Accommodating Complex Architectures (Infinite Canvas)
-
-### Can the canvas handle complex 50+ node enterprise graphs?
-**Yes — The canvas is completely unconstrained and dynamic:**
-
-1. **No Fixed Schema or Rigid Grids:**
-   * Built on **React Flow**, providing an infinite 2D plane with continuous panning, zooming (0.2x to 2.0x), and a live MiniMap.
-2. **Arbitrary Topology Patterns Supported:**
-   * **Hub-and-Spoke:** Central global database surrounded by regional edge gateways.
-   * **Full Mesh:** Multi-region active-active clusters with cross-region replication.
-   * **Multi-Cloud Hybrid:** AWS application servers connected to Cloudflare R2 zero-egress storage and GCP AI training clusters.
-3. **High Performance at Scale:**
-   * Client-side FinOps graph evaluator processes 50+ node graphs in **`<10ms`** without server round-trips.
