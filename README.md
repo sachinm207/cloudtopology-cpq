@@ -13,11 +13,14 @@
 
 ---
 
-## 📖 Overview
+## 📖 Overview & The Real Problem
 
 Enterprises waste **over $150 Billion annually** on misconfigured cloud infrastructure, unbudgeted cross-region network egress bandwidth, and unoptimized commitment discounts.
 
-Egress is an **architectural** cost (10–20%+ of monthly cloud spend) that cannot be fixed post-deployment—it must be solved at the topology design stage. Furthermore, global data protection regulations like **GDPR** require strict data residency guarantees that traditional spreadsheet calculators cannot visualize.
+### What is "Egress"?
+* **Ingress (Inbound):** Data entering a cloud datacenter (always free / $0.00).
+* **Egress (Outbound):** Data leaving a cloud provider's datacenter to users or other regions. Providers bill **$0.08 to $0.12 per Gigabyte**.
+* Egress is an **architectural** cost (10–20%+ of monthly cloud bills) that cannot be refactored post-deployment—it must be solved at the topology design stage.
 
 **CloudTopology CPQ** is an interactive multi-cloud Configure-Price-Quote (CPQ) and network topology co-pilot. Built on **React Flow** and powered by **WebMCP**, it enables human cloud architects and AI agents to visually design, cost-simulate, and mathematically optimize multi-region architectures (AWS, GCP, Azure, Cloudflare) in real time with sub-10ms deterministic calculation speed.
 
