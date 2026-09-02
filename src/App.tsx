@@ -20,6 +20,7 @@ import { Sidebar } from './components/Sidebar';
 import { QuoteModal } from './components/QuoteModal';
 import { TerraformModal } from './components/TerraformModal';
 import { AgentSimulator } from './components/AgentSimulator';
+import { RateUploadModal } from './components/RateUploadModal';
 
 import { TopologyNodeData, TopologyEdgeData, PricingTier, CloudProvider, ServiceType } from './types/topology';
 import { ARCHITECTURE_PRESETS, ArchitecturePreset } from './data/presets';
@@ -27,6 +28,7 @@ import { evaluateTopology, generateCPQQuote } from './engine/finopsEngine';
 import { generateTerraformHCL } from './engine/terraformGenerator';
 import { webMCPBridge } from './tools/modelContextBridge';
 import { RESOURCE_SKUS } from './data/catalog';
+import { CustomRateSheet, applyRateSheetToCatalog } from './engine/rateCardParser';
 
 const nodeTypes = {
   customNode: CustomNode,
@@ -64,6 +66,7 @@ export function App() {
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [isTerraformOpen, setIsTerraformOpen] = useState(false);
   const [isAgentOpen, setIsAgentOpen] = useState(true);
+  const [isRateUploadOpen, setIsRateUploadOpen] = useState(false);
 
   // Cast nodes and edges for evaluation
   const typedNodes = useMemo(() => {
@@ -98,6 +101,29 @@ export function App() {
           pricingTier: newTier,
         },
       }))
+    );
+  };
+
+  // Custom Rate Sheet / EDA Application
+  const handleApplyCustomRateSheet = (rateSheet: CustomRateSheet) => {
+    applyRateSheetToCatalog(RESOURCE_SKUS, rateSheet);
+    
+    // Force re-render of active nodes
+    setNodes((nds) =>
+      nds.map((node) => {
+        const sku = RESOURCE_SKUS.find((s) => s.id === (node.data as any)?.skuId);
+        let baseCost = sku?.monthlyPrice || 0;
+        if ((node.data as any)?.serviceType === 'storage' && (node.data as any)?.allocatedStorageGb) {
+          baseCost = ((node.data as any).allocatedStorageGb / 1000) * baseCost;
+        }
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            monthlyCost: baseCost * ((node.data as any)?.instances || 1),
+          },
+        };
+      })
     );
   };
 
@@ -259,6 +285,7 @@ export function App() {
         onOpenTerraform={() => setIsTerraformOpen(true)}
         onOpenQuote={() => setIsQuoteOpen(true)}
         onOpenAgent={() => setIsAgentOpen((prev) => !prev)}
+        onOpenRateUpload={() => setIsRateUploadOpen(true)}
       />
 
       {/* Main Workspace: Left Sidebar + Center React Flow Canvas */}
@@ -338,6 +365,13 @@ export function App() {
         hclCode={activeTerraformHCL}
         isOpen={isTerraformOpen}
         onClose={() => setIsTerraformOpen(false)}
+      />
+
+      {/* Custom Enterprise Rate Upload Modal */}
+      <RateUploadModal
+        isOpen={isRateUploadOpen}
+        onClose={() => setIsRateUploadOpen(false)}
+        onApplyRateSheet={handleApplyCustomRateSheet}
       />
     </div>
   );

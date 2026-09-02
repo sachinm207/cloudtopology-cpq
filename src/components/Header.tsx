@@ -8,7 +8,8 @@ import {
   FileCode, 
   FileText, 
   Sparkles,
-  Activity
+  Activity,
+  FileJson
 } from 'lucide-react';
 import { TopologyCostSummary, PricingTier } from '../types/topology';
 
@@ -19,6 +20,7 @@ interface HeaderProps {
   onOpenTerraform: () => void;
   onOpenQuote: () => void;
   onOpenAgent: () => void;
+  onOpenRateUpload: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,10 +30,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenTerraform,
   onOpenQuote,
   onOpenAgent,
+  onOpenRateUpload,
 }) => {
-  const criticalViolations = summary.violations.filter(v => v.severity === 'critical');
-  const warningViolations = summary.violations.filter(v => v.severity === 'warning');
-
   return (
     <header className="h-16 border-b border-gray-800/80 bg-[#0B0F19]/90 backdrop-blur-lg px-4 flex items-center justify-between z-20 select-none">
       {/* Brand & Title */}
@@ -99,24 +99,23 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Global p95 Latency */}
+        {/* Latency */}
         <div className="px-3 py-1.5 rounded-xl bg-gray-900/80 border border-gray-800 flex items-center gap-2.5">
           <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
             <Activity className="w-4 h-4" />
           </div>
           <div>
             <div className="text-[10px] text-gray-400 font-medium leading-none">p95 Latency</div>
-            <div className="text-xs font-mono font-bold text-cyan-300 mt-0.5">
-              {summary.p95LatencyMs} ms
+            <div className="text-xs font-mono font-bold text-cyan-400 mt-0.5">
+              {summary.p95LatencyMs}
+              <span className="text-[10px] text-gray-400 font-normal"> ms</span>
             </div>
           </div>
         </div>
 
-        {/* Compliance / Violations Status */}
+        {/* GDPR Compliance */}
         <div className={`px-3 py-1.5 rounded-xl border flex items-center gap-2.5 ${
-          criticalViolations.length > 0 
-            ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-            : warningViolations.length > 0
+          summary.violations.length > 0
             ? 'bg-amber-950/30 border-amber-500/30 text-amber-300'
             : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
         }`}>
@@ -144,6 +143,16 @@ export const Header: React.FC<HeaderProps> = ({
           <option value="savings_plan_3yr">3-Yr Savings Plan (~55% off)</option>
           <option value="spot">Spot Instances (~65% off)</option>
         </select>
+
+        {/* Custom Rate Card / JSON Upload Button */}
+        <button
+          onClick={onOpenRateUpload}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 text-xs font-medium transition-all cursor-pointer"
+          title="Upload Custom Rate Card or Enterprise Discount Agreement (JSON)"
+        >
+          <FileJson className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden sm:inline">Custom Rates</span>
+        </button>
 
         {/* AI Co-Pilot / Agent Button */}
         <button

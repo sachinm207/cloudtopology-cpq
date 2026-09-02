@@ -38,56 +38,39 @@ Instead of an architect manually filling out 50 nested pricing calculator dropdo
 * **Zero-Hallucination Multi-Cloud FinOps:** The AI agent cannot hallucinate instance prices or egress fees because every topology alteration is verified deterministically against verified cloud catalog rules.
 * **Instant Talk-or-Touch Architecture Iteration:** Human architects can drag nodes on the canvas or type natural language instructions to explore complex "what-if" architectural trade-offs in seconds.
 * **1-Click Terraform IaC Generation:** Instantly turns the validated visual topology into production-ready Terraform / OpenTofu HCL code and formal Enterprise CPQ Quote documents.
+* **Custom Enterprise Rate Cards (Beta):** Upload custom JSON rate sheets or apply blanket EDA percentages in 100% client-side memory.
 
 ### 4. How did you implement WebMCP?
 CloudTopology CPQ implements the WebMCP standard via `src/tools/modelContextBridge.ts`:
 * Registers typed tools on `window.modelContext`, `document.modelContext`, and `navigator.modelContext`.
-* Provides schemas and execution handlers for:
-  * `list_cloud_regions_and_skus`: Catalog overview across AWS, GCP, Azure, and Cloudflare.
-  * `get_topology_summary`: Live spend breakdown ($/mo), egress bills, latency metrics, and GDPR audit status.
-  * `simulate_traffic_and_egress`: Real-time data transfer simulation across connection links.
-  * `validate_compliance_and_latency`: Audits GDPR data residency rules and speed-of-light latencies.
-  * `optimize_cloud_architecture`: Automated FinOps solver for commitment discounts, edge caching, and data sovereignty.
-  * `apply_topology_to_canvas`: DOM and state projection tool modifying the live React Flow graph.
-  * `export_terraform_iac`: Produces deployable Terraform HCL and executive CPQ quotes.
+* Provides schemas and execution handlers for 7 core FinOps tools.
 
 ---
 
-## 🛠️ WebMCP Tool Specifications
+## 🏢 Air-Gapped Private VPC Deployment (Experimental Beta)
 
-| Tool Name | Type | Description |
-| :--- | :---: | :--- |
-| `list_cloud_regions_and_skus` | `readOnly` | Lists available regions, compute SKUs, database engines, and egress rates across all providers. |
-| `get_topology_summary` | `readOnly` | Returns active node graph, monthly spend breakdown, egress bills, and GDPR compliance alerts. |
-| `simulate_traffic_and_egress` | `mutation` | Simulates monthly GB transfer over specific links and computes exact dollar impact. |
-| `validate_compliance_and_latency` | `readOnly` | Audits GDPR data residency rules and fiber-optic network latency matrices. |
-| `optimize_cloud_architecture` | `mutation` | Applies FinOps optimizations (3-Yr Savings Plans, zero-egress edge caching, EU database relocation). |
-| `apply_topology_to_canvas` | `mutation` | Updates the live interactive React Flow topology board in real time. |
-| `export_terraform_iac` | `readOnly` | Generates validated Terraform HCL code and enterprise CPQ Quote documents. |
+> [!WARNING]
+> **EXPERIMENTAL BETA:** The Docker container setup and Air-Gapped VPC deployment are currently in **Beta**. Do not deploy directly to production VPCs without prior internal staging and security auditing.
+
+```bash
+# Build standalone air-gapped container
+docker build -t cloudtopology-cpq:latest .
+
+# Run in isolated corporate staging environment
+docker run -d -p 8080:80 --name cpq-app cloudtopology-cpq:latest
+```
 
 ---
 
 ## 🚀 Quick Start & Local Development
 
-### Prerequisites
-* Node.js 18+
-* npm or yarn
-
-### Installation
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/cloudtopology-cpq.git
-cd cloudtopology-cpq
-
 # Install dependencies
 npm install
 
 # Start local development server
 npm run dev
-```
 
-### Run Tests & Build
-```bash
 # Run Vitest test suite
 npm test
 

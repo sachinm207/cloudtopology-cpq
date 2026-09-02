@@ -37,7 +37,9 @@ Not every cloud service supports Spot instances or 3-Year Savings Plans:
 
 ---
 
-## 3. 📂 Custom Enterprise Rate Sheets (EDAs / PPAs)
+## 3. 📂 Custom Enterprise Rate Sheets (EDAs / PPAs) & JSON Upload Facility
+
+Users can upload their negotiated Enterprise Discount Agreement (EDA) or custom pricing JSON file directly via the **"Custom Rates"** button in the header.
 
 ### Why Uploading Confidential Rate Cards is 100% Safe:
 * **Zero Backend Servers:** The app runs **100% inside your browser's RAM** (Client-Side SPA). No files are uploaded to any external server.
@@ -67,39 +69,19 @@ Not every cloud service supports Spot instances or 3-Year Savings Plans:
 
 ---
 
-## 4. 🏢 Air-Gapped Private VPC Deployment
+## 4. 🏢 Air-Gapped Private VPC Deployment (EXPERIMENTAL BETA)
 
-For defense, healthcare, and enterprise banking environments with zero outbound internet access:
+> [!WARNING]
+> **EXPERIMENTAL BETA NOTICE:**
+> The Docker container and Air-Gapped Private VPC Deployment configuration are currently in **Feature Beta**. **DO NOT deploy directly to mission-critical production VPC environments** without prior isolated staging, security audit, and enterprise review.
+
+For staging evaluation in isolated networks:
 1. **Self-Contained Bundle:** All cloud rates, egress rules, and icons are bundled in the local distribution.
 2. **Docker Container Deployment:**
 ```bash
 # Build standalone air-gapped container
 docker build -t cloudtopology-cpq:latest .
 
-# Run inside isolated corporate VPC (zero internet required)
+# Run inside isolated corporate staging VPC
 docker run -d -p 8080:80 --name cpq-app cloudtopology-cpq:latest
 ```
-3. Open `http://<internal-vpc-ip>:8080/` on your corporate intranet.
-
----
-
-## 5. 📊 Understanding Connection Edge Labels (`8.3 TB | $0/mo | 8.5ms`)
-
-Each animated line connecting two nodes represents a live network path with three real-time telemetry metrics:
-
-```
-  [ Source Node ] ──────────( 8.3 TB | $0/mo | 8.5ms )──────────> [ Target Node ]
-                                ▲        ▲        ▲
-                                │        │        └─ Round-trip latency over fiber
-                                │        └────────── Monthly egress bandwidth bill
-                                └─────────────────── Monthly data transfer throughput
-```
-
-1. **Throughput Volume (`8.3 TB` / `500 GB`):**
-   * The estimated volume of data moving across that network link every calendar month (API payloads, database replication streams, media downloads).
-2. **Monthly Egress Bill (`$0/mo` vs `$153/mo`):**
-   * The dollar amount billed by the source cloud provider for that data transfer.
-   * **Why `$0/mo`?** If the connection uses **Cloudflare Tunnel / Bandwidth Alliance**, egress fees are waived to **$0.00**.
-   * **Why `$153/mo`?** If data flows across the public internet from AWS Frankfurt to AWS US, AWS charges public internet egress rates.
-3. **Network Latency (`8.5ms` vs `78.4ms`):**
-   * The physical round-trip propagation time ($RTT$) for data packets traveling over transatlantic/transpacific fiber-optic glass cables ($c / 1.52 \approx 200,\!000\text{ km/s}$) plus router switching overhead.
