@@ -6,9 +6,10 @@ import {
   ShieldCheck, 
   ChevronRight,
   Sliders,
-  Trash2
+  Trash2,
+  Tag
 } from 'lucide-react';
-import { TopologyNodeData, CloudProvider, ServiceType, ComplianceViolation } from '../types/topology';
+import { TopologyNodeData, CloudProvider, ServiceType, ComplianceViolation, PricingTier } from '../types/topology';
 import { CLOUD_REGIONS, RESOURCE_SKUS } from '../data/catalog';
 import { ARCHITECTURE_PRESETS, ArchitecturePreset } from '../data/presets';
 
@@ -247,6 +248,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {reg.name} {reg.isEU ? '🇪🇺 (EU GDPR)' : '🌐'}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                {/* Per-Node FinOps Pricing Tier Selector */}
+                <div>
+                  <label className="text-[11px] font-medium text-gray-400 block mb-1 flex items-center gap-1">
+                    <Tag className="w-3 h-3 text-emerald-400" /> Node Pricing Commitment Tier
+                  </label>
+                  <select
+                    value={selectedNode.data.pricingTier || 'on_demand'}
+                    onChange={(e) => onUpdateNode(selectedNode.id, { pricingTier: e.target.value as PricingTier })}
+                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="on_demand">On-Demand (Standard 0% off)</option>
+                    <option value="savings_plan_1yr">1-Yr Savings Plan (~35% off)</option>
+                    <option value="savings_plan_3yr">3-Yr Savings Plan (~55% off)</option>
+                    <option value="spot">Spot Instances (~65% off)</option>
                   </select>
                 </div>
 

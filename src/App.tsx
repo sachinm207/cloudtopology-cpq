@@ -43,6 +43,10 @@ export function App() {
     initialPreset.nodes.map((n) => ({
       ...n,
       type: 'customNode',
+      data: {
+        ...n.data,
+        pricingTier: initialPreset.pricingTier,
+      },
     }))
   );
 
@@ -82,6 +86,20 @@ export function App() {
   const summary = useMemo(() => {
     return evaluateTopology(typedNodes, typedEdges, pricingTier);
   }, [typedNodes, typedEdges, pricingTier]);
+
+  // Global Plan Change Handler - updates global and all active node cards
+  const handleGlobalPricingTierChange = (newTier: PricingTier) => {
+    setPricingTier(newTier);
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          pricingTier: newTier,
+        },
+      }))
+    );
+  };
 
   // Synchronize with WebMCP bridge
   useEffect(() => {
@@ -131,6 +149,10 @@ export function App() {
       preset.nodes.map((n) => ({
         ...n,
         type: 'customNode',
+        data: {
+          ...n.data,
+          pricingTier: preset.pricingTier,
+        },
       }))
     );
     setEdges(
@@ -233,7 +255,7 @@ export function App() {
       <Header
         summary={summary}
         pricingTier={pricingTier}
-        onPricingTierChange={setPricingTier}
+        onPricingTierChange={handleGlobalPricingTierChange}
         onOpenTerraform={() => setIsTerraformOpen(true)}
         onOpenQuote={() => setIsQuoteOpen(true)}
         onOpenAgent={() => setIsAgentOpen((prev) => !prev)}
