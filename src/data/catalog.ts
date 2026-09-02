@@ -1,4 +1,4 @@
-import { CloudRegion, ResourceSKU, ProviderEgressRules, CloudProvider } from '../types/topology';
+import { CloudRegion, ResourceSKU, ProviderEgressRules } from '../types/topology';
 
 export const CLOUD_REGIONS: Record<string, CloudRegion> = {
   // AWS Regions
@@ -155,7 +155,7 @@ export const CLOUD_REGIONS: Record<string, CloudRegion> = {
 };
 
 export const RESOURCE_SKUS: ResourceSKU[] = [
-  // AWS Compute
+  // AWS Compute (Supports Spot, 1-Yr, 3-Yr)
   {
     id: 'aws-ec2-t4g-xlarge',
     name: 'AWS t4g.xlarge (Graviton3 ARM)',
@@ -168,6 +168,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 98.11,
     savingsPlan1YrDiscount: 0.32,
     savingsPlan3YrDiscount: 0.54,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'High-efficiency ARM-based web server & API tier.',
   },
   {
@@ -182,6 +183,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 248.20,
     savingsPlan1YrDiscount: 0.35,
     savingsPlan3YrDiscount: 0.60,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'High-throughput microservices and batch processors.',
   },
   {
@@ -196,6 +198,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 560.64,
     savingsPlan1YrDiscount: 0.36,
     savingsPlan3YrDiscount: 0.58,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'Heavy application tier and distributed backend nodes.',
   },
   {
@@ -210,10 +213,11 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 884.76,
     savingsPlan1YrDiscount: 0.30,
     savingsPlan3YrDiscount: 0.48,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'Real-time LLM inference, embedding generator & computer vision.',
   },
 
-  // AWS Database
+  // AWS Database (RESTRICTED: No Spot instances allowed for stateful ACID databases)
   {
     id: 'aws-rds-aurora-postgres-large',
     name: 'AWS Aurora Serverless v2 PostgreSQL',
@@ -226,6 +230,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 700.80,
     savingsPlan1YrDiscount: 0.28,
     savingsPlan3YrDiscount: 0.45,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr'],
     description: 'Multi-AZ auto-scaling relational cluster with Global Database sync.',
   },
   {
@@ -238,24 +243,26 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 255.50,
     savingsPlan1YrDiscount: 0.20,
     savingsPlan3YrDiscount: 0.35,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr'],
     description: 'Sub-10ms serverless NoSQL with multi-region active-active replication.',
   },
 
-  // AWS Storage
+  // AWS Storage (RESTRICTED: No Spot instances)
   {
     id: 'aws-s3-standard',
     name: 'AWS S3 Standard Object Store',
     provider: 'aws',
     serviceType: 'storage',
     family: 'Object Storage',
-    hourlyPrice: 0.0315, // Base 1TB estimate
-    monthlyPrice: 23.00, // $0.023/GB/mo
+    hourlyPrice: 0.0315,
+    monthlyPrice: 23.00,
     savingsPlan1YrDiscount: 0.05,
     savingsPlan3YrDiscount: 0.10,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr'],
     description: 'Highly resilient multi-AZ object store (11 9s durability).',
   },
 
-  // GCP Compute
+  // GCP Compute (Supports Spot, 1-Yr, 3-Yr CUDs)
   {
     id: 'gcp-e2-standard-4',
     name: 'GCP e2-standard-4 (Balanced)',
@@ -268,6 +275,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 97.82,
     savingsPlan1YrDiscount: 0.37,
     savingsPlan3YrDiscount: 0.55,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'Cost-optimized VM for API gateways and background workers.',
   },
   {
@@ -282,10 +290,11 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 2679.10,
     savingsPlan1YrDiscount: 0.37,
     savingsPlan3YrDiscount: 0.55,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'High performance deep learning fine-tuning and heavy inference.',
   },
 
-  // Azure Compute
+  // Azure Compute (Supports Spot, 1-Yr, 3-Yr Reserved)
   {
     id: 'azure-d4s-v5',
     name: 'Azure Standard_D4s_v5',
@@ -298,6 +307,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 140.16,
     savingsPlan1YrDiscount: 0.38,
     savingsPlan3YrDiscount: 0.62,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'],
     description: 'Enterprise virtual machine with premium SSD acceleration.',
   },
 
@@ -312,6 +322,7 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     monthlyPrice: 50.00,
     savingsPlan1YrDiscount: 0.15,
     savingsPlan3YrDiscount: 0.30,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr'],
     description: 'Global 0ms cold-start V8 isolates executing at 330+ edge datacenters.',
   },
   {
@@ -321,14 +332,15 @@ export const RESOURCE_SKUS: ResourceSKU[] = [
     serviceType: 'storage',
     family: 'Zero-Egress Object Storage',
     hourlyPrice: 0.0205,
-    monthlyPrice: 15.00, // $0.015/GB/mo
+    monthlyPrice: 15.00,
     savingsPlan1YrDiscount: 0.10,
     savingsPlan3YrDiscount: 0.20,
+    allowedPricingTiers: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr'],
     description: 'S3-compatible object store with $0.00 data transfer fees worldwide.',
   },
 ];
 
-export const PROVIDER_EGRESS_RULES: Record<CloudProvider, ProviderEgressRules> = {
+export const PROVIDER_EGRESS_RULES: Record<string, ProviderEgressRules> = {
   aws: {
     internetTiers: [
       { maxTb: 10, ratePerGb: 0.09 },
@@ -367,7 +379,7 @@ export const PROVIDER_EGRESS_RULES: Record<CloudProvider, ProviderEgressRules> =
   },
   cloudflare: {
     internetTiers: [
-      { maxTb: Infinity, ratePerGb: 0.00 }, // Zero egress!
+      { maxTb: Infinity, ratePerGb: 0.00 },
     ],
     crossRegionPerGb: 0.00,
     interZonePerGb: 0.00,

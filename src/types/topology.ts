@@ -36,6 +36,7 @@ export interface ResourceSKU {
   monthlyPrice: number;
   savingsPlan1YrDiscount: number;
   savingsPlan3YrDiscount: number;
+  allowedPricingTiers: PricingTier[];
   description: string;
 }
 

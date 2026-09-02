@@ -7,7 +7,8 @@ import {
   ChevronRight,
   Sliders,
   Trash2,
-  Tag
+  Tag,
+  Lock
 } from 'lucide-react';
 import { TopologyNodeData, CloudProvider, ServiceType, ComplianceViolation, PricingTier } from '../types/topology';
 import { CLOUD_REGIONS, RESOURCE_SKUS } from '../data/catalog';
@@ -33,6 +34,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeTab, setActiveTab] = useState<'presets' | 'palette' | 'node' | 'compliance'>('presets');
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider>('aws');
   const [selectedService, setSelectedService] = useState<ServiceType>('compute');
+
+  // Selected node SKU
+  const selectedSku = selectedNode ? RESOURCE_SKUS.find(s => s.id === selectedNode.data.skuId) : null;
+  const allowedTiers = selectedSku?.allowedPricingTiers || ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'];
 
   return (
     <aside className="w-80 border-r border-gray-800/80 bg-[#0B0F19]/95 backdrop-blur-md flex flex-col h-[calc(100vh-4rem)] z-10 select-none">
@@ -251,20 +256,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </select>
                 </div>
 
-                {/* Per-Node FinOps Pricing Tier Selector */}
+                {/* Restricted Per-Node FinOps Pricing Tier Selector */}
                 <div>
-                  <label className="text-[11px] font-medium text-gray-400 block mb-1 flex items-center gap-1">
-                    <Tag className="w-3 h-3 text-emerald-400" /> Node Pricing Commitment Tier
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-medium text-gray-400 flex items-center gap-1">
+                      <Tag className="w-3 h-3 text-emerald-400" /> Pricing Commitment Tier
+                    </label>
+                    {!allowedTiers.includes('spot') && (
+                      <span className="text-[9px] font-mono text-amber-400/80 flex items-center gap-0.5" title="Databases & storage do not support Spot instances">
+                        <Lock className="w-2.5 h-2.5" /> No Spot (Stateful)
+                      </span>
+                    )}
+                  </div>
                   <select
                     value={selectedNode.data.pricingTier || 'on_demand'}
                     onChange={(e) => onUpdateNode(selectedNode.id, { pricingTier: e.target.value as PricingTier })}
                     className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 font-mono focus:outline-none focus:border-blue-500"
                   >
-                    <option value="on_demand">On-Demand (Standard 0% off)</option>
-                    <option value="savings_plan_1yr">1-Yr Savings Plan (~35% off)</option>
-                    <option value="savings_plan_3yr">3-Yr Savings Plan (~55% off)</option>
-                    <option value="spot">Spot Instances (~65% off)</option>
+                    <option value="on_demand">On-Demand (0% Baseline)</option>
+                    {allowedTiers.includes('savings_plan_1yr') && (
+                      <option value="savings_plan_1yr">1-Yr Savings Plan (~35% off)</option>
+                    )}
+                    {allowedTiers.includes('savings_plan_3yr') && (
+                      <option value="savings_plan_3yr">3-Yr Savings Plan (~55% off)</option>
+                    )}
+                    {allowedTiers.includes('spot') && (
+                      <option value="spot">Spot Instances (~65% off)</option>
+                    )}
                   </select>
                 </div>
 
