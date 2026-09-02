@@ -20,6 +20,8 @@ import { Sidebar } from './components/Sidebar';
 import { QuoteModal } from './components/QuoteModal';
 import { TerraformModal } from './components/TerraformModal';
 import { RateUploadModal } from './components/RateUploadModal';
+import { HowToUseModal } from './components/HowToUseModal';
+import { WebMCPGuideModal } from './components/WebMCPGuideModal';
 
 import { TopologyNodeData, TopologyEdgeData, PricingTier, CloudProvider, ServiceType } from './types/topology';
 import { ARCHITECTURE_PRESETS, ArchitecturePreset } from './data/presets';
@@ -65,6 +67,8 @@ export function App() {
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [isTerraformOpen, setIsTerraformOpen] = useState(false);
   const [isRateUploadOpen, setIsRateUploadOpen] = useState(false);
+  const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
+  const [isWebMCPGuideOpen, setIsWebMCPGuideOpen] = useState(false);
 
   // Cast nodes and edges for evaluation
   const typedNodes = useMemo(() => {
@@ -275,7 +279,7 @@ export function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#0B0F19] text-gray-100 overflow-hidden select-none">
-      {/* Top FinOps Metrics & Action Bar */}
+      {/* 2-ROW FinOps Header & Action Bar */}
       <Header
         summary={summary}
         pricingTier={pricingTier}
@@ -283,10 +287,12 @@ export function App() {
         onOpenTerraform={() => setIsTerraformOpen(true)}
         onOpenQuote={() => setIsQuoteOpen(true)}
         onOpenRateUpload={() => setIsRateUploadOpen(true)}
+        onOpenHowToUse={() => setIsHowToUseOpen(true)}
+        onOpenWebMCPGuide={() => setIsWebMCPGuideOpen(true)}
       />
 
       {/* Main Workspace: Left Sidebar + Center React Flow Canvas */}
-      <div className="flex flex-1 relative overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
+      <div className="flex flex-1 relative overflow-hidden" style={{ height: 'calc(100vh - 6.25rem)' }}>
         <Sidebar
           selectedNode={selectedNode}
           onUpdateNode={handleUpdateNode}
@@ -360,6 +366,18 @@ export function App() {
         isOpen={isRateUploadOpen}
         onClose={() => setIsRateUploadOpen(false)}
         onApplyRateSheet={handleApplyCustomRateSheet}
+      />
+
+      {/* How to Use Modal */}
+      <HowToUseModal
+        isOpen={isHowToUseOpen}
+        onClose={() => setIsHowToUseOpen(false)}
+      />
+
+      {/* WebMCP Guide & 7 Examples Modal */}
+      <WebMCPGuideModal
+        isOpen={isWebMCPGuideOpen}
+        onClose={() => setIsWebMCPGuideOpen(false)}
       />
     </div>
   );
