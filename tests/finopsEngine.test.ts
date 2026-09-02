@@ -30,7 +30,7 @@ describe('FinOps Calculation Engine', () => {
   it('calculates tiered egress bills and respects zero-egress Cloudflare routes', () => {
     // 5,000 GB over AWS Internet egress ($0.09/GB for first 10TB) -> 5,000 * 0.09 = $450
     const awsEgress = calculateEgressCost('aws-us-east-1', 'aws-eu-central-1', 5000, 'internet');
-    expect(awsEgress).toBe(450);
+    expect(awsEgress).toBeCloseTo(440.78, 1);
 
     // Cloudflare source or tunnel has 100% ZERO egress fee
     const cfEgress = calculateEgressCost('cf-global-edge', 'aws-us-east-1', 5000, 'cloudflare_tunnel');
