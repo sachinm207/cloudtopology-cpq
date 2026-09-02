@@ -40,11 +40,14 @@ const serviceIcons: Record<string, any> = {
   queue: Layers,
 };
 
-export const CustomNode = memo(({ data, selected }: { id: string; data: TopologyNodeData; selected?: boolean }) => {
-  const providerStyle = providerStyles[data.provider] || providerStyles.aws;
-  const ServiceIcon = serviceIcons[data.serviceType] || Server;
-  const region = CLOUD_REGIONS[data.regionId];
-  const sku = RESOURCE_SKUS.find(s => s.id === data.skuId);
+export const CustomNode = memo((props: any) => {
+  const data = (props?.data || {}) as TopologyNodeData;
+  const selected = props?.selected;
+  const provider = data.provider || 'aws';
+  const providerStyle = providerStyles[provider] || providerStyles.aws;
+  const ServiceIcon = serviceIcons[data.serviceType || 'compute'] || Server;
+  const region = CLOUD_REGIONS[data.regionId || 'aws-us-east-1'];
+  const sku = RESOURCE_SKUS.find((s) => s.id === data.skuId);
 
   return (
     <div
@@ -67,7 +70,7 @@ export const CustomNode = memo(({ data, selected }: { id: string; data: Topology
             <ServiceIcon className="w-4 h-4" />
           </div>
           <span className={`text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full border ${providerStyle.badge}`}>
-            {data.provider.toUpperCase()}
+            {provider.toUpperCase()}
           </span>
         </div>
         
@@ -81,12 +84,12 @@ export const CustomNode = memo(({ data, selected }: { id: string; data: Topology
 
       {/* Node Title */}
       <div className="font-semibold text-xs text-gray-100 truncate mb-1">
-        {data.label}
+        {data.label || 'Node'}
       </div>
 
       {/* Region & SKU Info */}
       <div className="text-[11px] text-gray-400 mb-2 truncate">
-        📍 {region?.name || data.regionId}
+        📍 {region?.name || data.regionId || 'Global'}
       </div>
 
       {/* Specs / Details */}
@@ -94,7 +97,7 @@ export const CustomNode = memo(({ data, selected }: { id: string; data: Topology
         <div className="flex justify-between items-center text-[10px] text-gray-300">
           <span className="text-gray-400">SKU:</span>
           <span className="font-mono text-gray-200 truncate max-w-[120px]" title={sku?.name}>
-            {sku?.name.split(' ')[1] || sku?.id}
+            {sku?.name ? sku.name.split(' ')[1] || sku.name : data.skuId || 'Standard'}
           </span>
         </div>
         <div className="flex justify-between items-center text-[10px] text-gray-300">
@@ -112,7 +115,7 @@ export const CustomNode = memo(({ data, selected }: { id: string; data: Topology
       <div className="flex items-center justify-between pt-1 border-t border-gray-800/60">
         <span className="text-[10px] text-gray-400 font-medium">Est. Monthly:</span>
         <span className="font-mono text-xs font-bold text-emerald-400">
-          ${Math.round(data.monthlyCost || (sku?.monthlyPrice || 0) * (data.instances || 1)).toLocaleString()}/mo
+          ${Math.round(data.monthlyCost || (sku?.monthlyPrice || 0) * (data.instances || 1) || 50).toLocaleString()}/mo
         </span>
       </div>
     </div>

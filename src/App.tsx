@@ -65,7 +65,7 @@ export function App() {
   const typedNodes = useMemo(() => {
     return nodes.map(n => ({
       id: n.id,
-      data: n.data as unknown as TopologyNodeData,
+      data: (n.data || {}) as unknown as TopologyNodeData,
     }));
   }, [nodes]);
 
@@ -101,7 +101,7 @@ export function App() {
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) return null;
     const n = nodes.find((node) => node.id === selectedNodeId);
-    return n ? { id: n.id, data: n.data as unknown as TopologyNodeData } : null;
+    return n ? { id: n.id, data: (n.data || {}) as unknown as TopologyNodeData } : null;
   }, [selectedNodeId, nodes]);
 
   // Connect edges
@@ -228,7 +228,7 @@ export function App() {
   }, [typedNodes, typedEdges]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0B0F19] text-gray-100 overflow-hidden">
+    <div className="flex flex-col h-screen w-screen bg-[#0B0F19] text-gray-100 overflow-hidden select-none">
       {/* Top FinOps Metrics & Action Bar */}
       <Header
         summary={summary}
@@ -240,7 +240,7 @@ export function App() {
       />
 
       {/* Main Workspace: Left Sidebar + Center React Flow Canvas */}
-      <div className="flex flex-1 relative overflow-hidden">
+      <div className="flex flex-1 relative overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
         <Sidebar
           selectedNode={selectedNode}
           onUpdateNode={handleUpdateNode}
@@ -251,7 +251,7 @@ export function App() {
         />
 
         {/* Center Visual Graph Canvas */}
-        <main className="flex-1 h-full relative">
+        <main className="flex-1 h-full w-full relative" style={{ height: '100%', width: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -265,6 +265,7 @@ export function App() {
             fitView
             fitViewOptions={{ padding: 0.2 }}
             className="bg-[#070A10]"
+            style={{ width: '100%', height: '100%' }}
           >
             <Background variant={BackgroundVariant.Dots} gap={24} size={1.2} color="#1F2937" />
             <Controls className="!bg-gray-900 !border-gray-800 !text-gray-300 !fill-gray-300 shadow-xl" />

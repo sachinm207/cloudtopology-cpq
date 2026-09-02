@@ -1,19 +1,21 @@
 import { memo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, EdgeProps } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import { Zap, Lock, Activity } from 'lucide-react';
 import { TopologyEdgeData } from '../types/topology';
 
-export const CustomEdge = memo(({
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  data,
-  style = {},
-  markerEnd,
-}: EdgeProps) => {
+export const CustomEdge = memo((props: any) => {
+  const {
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    data,
+    style = {},
+    markerEnd,
+  } = props;
+
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -23,7 +25,7 @@ export const CustomEdge = memo(({
     targetY,
   });
 
-  const edgeData = data as unknown as TopologyEdgeData | undefined;
+  const edgeData = data as TopologyEdgeData | undefined;
   const transferGb = edgeData?.monthlyTransferGb || 1000;
   const cost = edgeData?.monthlyEgressCost || 0;
   const latency = edgeData?.calculatedLatencyMs || 15.0;
