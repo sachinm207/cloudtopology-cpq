@@ -88,9 +88,12 @@ export function App() {
           );
           if (allValid) {
             return {
-              nodes: parsed.nodes.map((n: any) => ({
+              nodes: parsed.nodes.map((n: any, idx: number) => ({
                 ...n,
                 type: 'customNode',
+                position: (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+                  ? n.position
+                  : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
                 data: {
                   ...n.data,
                   isConnected: true,
@@ -109,9 +112,12 @@ export function App() {
       console.warn('Could not read cached topology state:', e);
     }
     return {
-      nodes: initialPreset.nodes.map((n) => ({
+      nodes: initialPreset.nodes.map((n, idx) => ({
         ...n,
         type: 'customNode',
+        position: (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+          ? n.position
+          : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
         data: {
           ...n.data,
           pricingTier: initialPreset.pricingTier,
@@ -182,7 +188,9 @@ export function App() {
   const typedNodes = useMemo(() => {
     return nodes.map((n: any, idx: number) => ({
       id: n.id,
-      position: n.position || { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
+      position: (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+        ? n.position
+        : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
       data: (n.data || {}) as unknown as TopologyNodeData,
     }));
   }, [nodes]);
@@ -196,12 +204,18 @@ export function App() {
     }));
   }, [edges]);
 
-  // Keep node connection state updated
+  // Keep node connection state updated and guarantee valid coordinates for React Flow
   const renderedNodes = useMemo(() => {
-    return nodes.map((n: any) => {
+    return nodes.map((n: any, idx: number) => {
       const isConnected = edges.some((e: any) => e.source === n.id || e.target === n.id);
+      const position = (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+        ? n.position
+        : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 };
+
       return {
         ...n,
+        type: 'customNode',
+        position,
         data: {
           ...n.data,
           isConnected,
@@ -259,7 +273,13 @@ export function App() {
 
   // Load Saved Setup from Local Library
   const handleLoadFromLibrary = (item: SavedArchitectureItem) => {
-    setNodes(item.nodes.map((n: any) => ({ ...n, type: 'customNode' })));
+    setNodes(item.nodes.map((n: any, idx: number) => ({
+      ...n,
+      type: 'customNode',
+      position: (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+        ? n.position
+        : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
+    })));
     setEdges(item.edges.map((e: any) => ({ ...e, type: 'customEdge' })));
     setPricingTier(item.pricingTier || 'savings_plan_1yr');
     setSelectedNodeId(null);
@@ -276,9 +296,12 @@ export function App() {
     try {
       const parsed = JSON.parse(jsonContent);
       if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-        const importedNodes = parsed.nodes.map((n: any) => ({
+        const importedNodes = parsed.nodes.map((n: any, idx: number) => ({
           ...n,
           type: 'customNode',
+          position: (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+            ? n.position
+            : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
           data: {
             ...n.data,
             isConnected: true,
@@ -377,9 +400,12 @@ export function App() {
   // Load Preset Architecture
   const handleLoadPreset = (preset: ArchitecturePreset) => {
     setNodes(
-      preset.nodes.map((n) => ({
+      preset.nodes.map((n, idx) => ({
         ...n,
         type: 'customNode',
+        position: (n.position && typeof n.position.x === 'number' && typeof n.position.y === 'number')
+          ? n.position
+          : { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
         data: {
           ...n.data,
           pricingTier: preset.pricingTier,

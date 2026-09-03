@@ -29,8 +29,8 @@ class ErrorBoundary extends Component<Props, State> {
 
   private handleReset = () => {
     try {
-      localStorage.removeItem('cloudtopology_active_state_v2');
-      localStorage.removeItem('cloudtopology_theme_v1');
+      localStorage.clear();
+      sessionStorage.clear();
     } catch {}
     window.location.reload();
   };
