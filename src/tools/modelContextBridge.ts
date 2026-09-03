@@ -549,6 +549,7 @@ export class WebMCPBridge {
     const toolList = Array.from(this.tools.values()).map(t => ({
       name: t.name,
       description: t.description,
+      inputSchema: t.inputSchema,
       parameters: t.inputSchema,
     }));
 
@@ -557,9 +558,18 @@ export class WebMCPBridge {
       callTool: async (name: string, args: any) => {
         return await this.executeTool(name, args);
       },
+      registerTool: (toolDef: any) => {
+        if (!toolDef || !toolDef.name) return;
+        this.tools.set(toolDef.name, {
+          name: toolDef.name,
+          description: toolDef.description || '',
+          inputSchema: toolDef.inputSchema || toolDef.parameters || { type: 'object', properties: {} },
+          execute: toolDef.execute || (async () => ({ success: true })),
+        });
+      },
     };
 
-    // Safe publication to window.modelContext
+    // 1. Safe publication to window.modelContext
     try {
       (window as any).modelContext = modelContext;
     } catch {
@@ -574,7 +584,22 @@ export class WebMCPBridge {
       }
     }
 
-    // Safe publication to document.modelContext (handling Chrome #enable-webmcp-testing getter-only mode)
+    // 2. Safe publication to navigator.modelContext
+    try {
+      if (typeof navigator !== 'undefined') {
+        (navigator as any).modelContext = modelContext;
+      }
+    } catch {
+      try {
+        Object.defineProperty(navigator, 'modelContext', {
+          value: modelContext,
+          writable: true,
+          configurable: true,
+        });
+      } catch {}
+    }
+
+    // 3. Safe publication to document.modelContext (handling Chrome #enable-webmcp-testing getter-only mode)
     try {
       if (typeof document !== 'undefined') {
         const existingDocContext = (document as any).modelContext;
@@ -584,6 +609,7 @@ export class WebMCPBridge {
               existingDocContext.registerTool({
                 name: tool.name,
                 description: tool.description,
+                inputSchema: tool.inputSchema,
                 parameters: tool.inputSchema,
                 execute: tool.execute,
               });
