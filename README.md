@@ -85,6 +85,13 @@ npm test
 npm run build
 ```
 
+## 📚 Documentation & Architecture Guides
+
+* **🏆 [DEVPOST_SUBMISSION.md](DEVPOST_SUBMISSION.md):** Complete hackathon submission pitch, story with LaTeX mathematics, and tech stack.
+* **📊 [FinOps & Latency Architecture](docs/FINOPS_AND_LATENCY_ARCHITECTURE.md):** In-depth breakdown of piecewise egress tariffs, Haversine geodesic distance, and commitment discount multipliers.
+* **📖 [User Guide & FAQ](docs/USER_GUIDE_AND_FAQ.md):** Step-by-step visual onboarding, WebMCP agent prompts, and frequently asked questions.
+* **🖼️ [Screenshot Gallery](gallery/):** 12 high-resolution 3:2 ratio screenshots showcasing all features in Light and Dark themes.
+
 ---
 
 ## 📄 License
