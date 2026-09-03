@@ -22,6 +22,7 @@ import { TerraformModal } from './components/TerraformModal';
 import { RateUploadModal } from './components/RateUploadModal';
 import { HowToUseModal } from './components/HowToUseModal';
 import { WebMCPGuideModal } from './components/WebMCPGuideModal';
+import { SaveArchitectureModal, SavedArchitectureItem } from './components/SaveArchitectureModal';
 
 import { TopologyNodeData, TopologyEdgeData, PricingTier, CloudProvider, ServiceType } from './types/topology';
 import { ARCHITECTURE_PRESETS, ArchitecturePreset } from './data/presets';
@@ -30,7 +31,7 @@ import { generateTerraformHCL } from './engine/terraformGenerator';
 import { webMCPBridge } from './tools/modelContextBridge';
 import { RESOURCE_SKUS } from './data/catalog';
 import { CustomRateSheet, applyRateSheetToCatalog } from './engine/rateCardParser';
-import { Sparkles, PlusCircle, Layers, Cpu } from 'lucide-react';
+import { Sparkles, PlusCircle, Layers, Save } from 'lucide-react';
 
 const nodeTypes = {
   customNode: CustomNode,
@@ -40,31 +41,63 @@ const edgeTypes = {
   customEdge: CustomEdge,
 };
 
+const STORAGE_KEY_ACTIVE = 'cloudtopology_active_state_v2';
+const STORAGE_KEY_SAVED = 'cloudtopology_saved_projects_v2';
+
 export function App() {
-  // Load Global E-Commerce Web App by default (index 1)
   const initialPreset = ARCHITECTURE_PRESETS[1] || ARCHITECTURE_PRESETS[0];
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>(
-    initialPreset.nodes.map((n) => ({
-      ...n,
-      type: 'customNode',
-      data: {
-        ...n.data,
-        pricingTier: initialPreset.pricingTier,
-        isConnected: true,
-      },
-    }))
-  );
+  // Try loading active state from LocalStorage on mount
+  const getInitialState = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_ACTIVE);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
+          return {
+            nodes: parsed.nodes,
+            edges: parsed.edges,
+            pricingTier: parsed.pricingTier || 'savings_plan_1yr',
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read cached topology state:', e);
+    }
+    return {
+      nodes: initialPreset.nodes.map((n) => ({
+        ...n,
+        type: 'customNode',
+        data: {
+          ...n.data,
+          pricingTier: initialPreset.pricingTier,
+          isConnected: true,
+        },
+      })),
+      edges: initialPreset.edges.map((e) => ({
+        ...e,
+        type: 'customEdge',
+      })),
+      pricingTier: initialPreset.pricingTier || 'savings_plan_1yr',
+    };
+  };
 
-  const [edges, setEdges, onEdgesChange] = useEdgesState<any>(
-    initialPreset.edges.map((e) => ({
-      ...e,
-      type: 'customEdge',
-    }))
-  );
+  const initial = useMemo(() => getInitialState(), []);
 
-  const [pricingTier, setPricingTier] = useState<PricingTier>(initialPreset.pricingTier || 'on_demand');
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>(initial.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>(initial.edges);
+  const [pricingTier, setPricingTier] = useState<PricingTier>(initial.pricingTier);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Saved library state
+  const [savedArchitectures, setSavedArchitectures] = useState<SavedArchitectureItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_SAVED);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   
   // Modals state
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
@@ -72,17 +105,45 @@ export function App() {
   const [isRateUploadOpen, setIsRateUploadOpen] = useState(false);
   const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
   const [isWebMCPGuideOpen, setIsWebMCPGuideOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
+  // Auto-Save active state to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY_ACTIVE,
+        JSON.stringify({
+          nodes,
+          edges,
+          pricingTier,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
+  }, [nodes, edges, pricingTier]);
+
+  // Save library update to localStorage
+  const persistSavedLibrary = (updated: SavedArchitectureItem[]) => {
+    setSavedArchitectures(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY_SAVED, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Could not persist saved library:', e);
+    }
+  };
 
   // Cast nodes and edges for evaluation
   const typedNodes = useMemo(() => {
-    return nodes.map(n => ({
+    return nodes.map((n: any) => ({
       id: n.id,
       data: (n.data || {}) as unknown as TopologyNodeData,
     }));
   }, [nodes]);
 
   const typedEdges = useMemo(() => {
-    return edges.map(e => ({
+    return edges.map((e: any) => ({
       id: e.id,
       source: e.source,
       target: e.target,
@@ -92,8 +153,8 @@ export function App() {
 
   // Keep node connection state updated
   const renderedNodes = useMemo(() => {
-    return nodes.map((n) => {
-      const isConnected = edges.some((e) => e.source === n.id || e.target === n.id);
+    return nodes.map((n: any) => {
+      const isConnected = edges.some((e: any) => e.source === n.id || e.target === n.id);
       return {
         ...n,
         data: {
@@ -128,6 +189,70 @@ export function App() {
     setNodes([]);
     setEdges([]);
     setSelectedNodeId(null);
+  };
+
+  // Save Current Setup to Local Library
+  const handleSaveToLibrary = (name: string, description: string) => {
+    const newItem: SavedArchitectureItem = {
+      id: `arch-${Date.now()}`,
+      name,
+      description,
+      savedAt: new Date().toISOString(),
+      pricingTier,
+      summary: {
+        totalMonthlySpend: summary.totalMonthlySpend,
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+      },
+      nodes,
+      edges,
+    };
+
+    const updated = [newItem, ...savedArchitectures.filter(a => a.name !== name)];
+    persistSavedLibrary(updated);
+  };
+
+  // Load Saved Setup from Local Library
+  const handleLoadFromLibrary = (item: SavedArchitectureItem) => {
+    setNodes(item.nodes.map((n: any) => ({ ...n, type: 'customNode' })));
+    setEdges(item.edges.map((e: any) => ({ ...e, type: 'customEdge' })));
+    setPricingTier(item.pricingTier || 'savings_plan_1yr');
+    setSelectedNodeId(null);
+  };
+
+  // Delete from Local Library
+  const handleDeleteFromLibrary = (id: string) => {
+    const updated = savedArchitectures.filter(a => a.id !== id);
+    persistSavedLibrary(updated);
+  };
+
+  // Import JSON file onto canvas
+  const handleImportJSON = (jsonContent: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonContent);
+      if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
+        const importedNodes = parsed.nodes.map((n: any) => ({
+          ...n,
+          type: 'customNode',
+          data: {
+            ...n.data,
+            isConnected: true,
+          },
+        }));
+        const importedEdges = parsed.edges.map((e: any) => ({
+          ...e,
+          type: 'customEdge',
+        }));
+        setNodes(importedNodes);
+        setEdges(importedEdges);
+        if (parsed.pricingTier) setPricingTier(parsed.pricingTier);
+        setSelectedNodeId(null);
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to import JSON:', e);
+    }
+    return false;
   };
 
   // Custom Rate Sheet / EDA Application
@@ -170,7 +295,7 @@ export function App() {
   // Selected node object
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) return null;
-    const n = nodes.find((node) => node.id === selectedNodeId);
+    const n = nodes.find((node: any) => node.id === selectedNodeId);
     return n ? { id: n.id, data: (n.data || {}) as unknown as TopologyNodeData } : null;
   }, [selectedNodeId, nodes]);
 
@@ -190,7 +315,7 @@ export function App() {
           calculatedLatencyMs: 15.0,
         },
       };
-      setEdges((eds) => addEdge(newEdge, eds));
+      setEdges((eds: any[]) => addEdge(newEdge, eds));
     },
     [setEdges]
   );
@@ -331,6 +456,7 @@ export function App() {
         onOpenHowToUse={() => setIsHowToUseOpen(true)}
         onOpenWebMCPGuide={() => setIsWebMCPGuideOpen(true)}
         onClearCanvas={handleClearCanvas}
+        onOpenSaveLoad={() => setIsSaveModalOpen(true)}
       />
 
       {/* Main Workspace: Left Sidebar + Center React Flow Canvas */}
@@ -342,6 +468,10 @@ export function App() {
           onAddNode={handleAddNode}
           onLoadPreset={handleLoadPreset}
           violations={summary.violations}
+          savedArchitectures={savedArchitectures}
+          onLoadSavedArchitecture={handleLoadFromLibrary}
+          onDeleteSavedArchitecture={handleDeleteFromLibrary}
+          onOpenSaveModal={() => setIsSaveModalOpen(true)}
         />
 
         {/* Center Visual Graph Canvas */}
@@ -407,11 +537,11 @@ export function App() {
                     <span>Load Template</span>
                   </button>
                   <button
-                    onClick={() => setIsWebMCPGuideOpen(true)}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-600/40 hover:to-teal-600/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold transition-all cursor-pointer"
+                    onClick={() => setIsSaveModalOpen(true)}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 text-xs font-semibold transition-all cursor-pointer"
                   >
-                    <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>WebMCP Guide</span>
+                    <Save className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Open Library</span>
                   </button>
                 </div>
               </div>
@@ -448,6 +578,21 @@ export function App() {
         isOpen={isRateUploadOpen}
         onClose={() => setIsRateUploadOpen(false)}
         onApplyRateSheet={handleApplyCustomRateSheet}
+      />
+
+      {/* Save & Manage Architectures Modal */}
+      <SaveArchitectureModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        nodes={nodes}
+        edges={edges}
+        pricingTier={pricingTier}
+        summary={summary}
+        savedList={savedArchitectures}
+        onSaveToLibrary={handleSaveToLibrary}
+        onLoadFromLibrary={handleLoadFromLibrary}
+        onDeleteFromLibrary={handleDeleteFromLibrary}
+        onImportJSON={handleImportJSON}
       />
 
       {/* How to Use Modal */}

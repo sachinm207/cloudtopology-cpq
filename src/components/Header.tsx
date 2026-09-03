@@ -13,7 +13,8 @@ import {
   Cpu,
   Tag,
   AlertCircle,
-  Plus
+  Plus,
+  Save
 } from 'lucide-react';
 import { TopologyCostSummary, PricingTier } from '../types/topology';
 
@@ -27,6 +28,7 @@ interface HeaderProps {
   onOpenHowToUse: () => void;
   onOpenWebMCPGuide: () => void;
   onClearCanvas: () => void;
+  onOpenSaveLoad: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenHowToUse,
   onOpenWebMCPGuide,
   onClearCanvas,
+  onOpenSaveLoad,
 }) => {
   return (
     <div className="flex flex-col border-b border-gray-800/80 bg-[#0B0F19]/95 backdrop-blur-lg z-20 select-none">
@@ -168,6 +171,16 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Canvas</span>
+          </button>
+
+          {/* Save / Manage Architectures Button */}
+          <button
+            onClick={onOpenSaveLoad}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+            title="Save, Export, or Load Architectures (JSON / Library)"
+          >
+            <Save className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Save / Load</span>
           </button>
 
           {/* Commitment Plan Switcher */}

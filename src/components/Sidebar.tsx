@@ -12,12 +12,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
-
+  FolderOpen,
 
 } from 'lucide-react';
 import { TopologyNodeData, CloudProvider, ServiceType, ComplianceViolation, PricingTier } from '../types/topology';
 import { CLOUD_REGIONS, RESOURCE_SKUS } from '../data/catalog';
 import { ARCHITECTURE_PRESETS, ArchitecturePreset } from '../data/presets';
+import { SavedArchitectureItem } from './SaveArchitectureModal';
 
 interface SidebarProps {
   selectedNode: { id: string; data: TopologyNodeData } | null;
@@ -26,6 +27,10 @@ interface SidebarProps {
   onAddNode: (provider: CloudProvider, serviceType: ServiceType, skuId: string, regionId: string) => void;
   onLoadPreset: (preset: ArchitecturePreset) => void;
   violations: ComplianceViolation[];
+  savedArchitectures?: SavedArchitectureItem[];
+  onLoadSavedArchitecture?: (item: SavedArchitectureItem) => void;
+  onDeleteSavedArchitecture?: (id: string) => void;
+  onOpenSaveModal?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -35,6 +40,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAddNode,
   onLoadPreset,
   violations,
+  savedArchitectures = [],
+  onLoadSavedArchitecture,
+  onDeleteSavedArchitecture,
+  onOpenSaveModal,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'presets' | 'palette' | 'node' | 'compliance'>('presets');
@@ -102,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className={`p-2.5 rounded-xl transition-all cursor-pointer relative group ${
                 activeTab === 'presets' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40' : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
               }`}
-              title="Architecture Presets"
+              title="Architecture Presets & Saved Designs"
             >
               <Layers className="w-4 h-4" />
             </button>
@@ -221,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          {/* Tab 1: Architecture Presets */}
+          {/* Tab 1: Architecture Presets & Saved Designs */}
           {activeTab === 'presets' && (
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* Quick Blank Canvas Button */}
@@ -236,6 +245,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="text-[10px] font-mono text-blue-400 group-hover:translate-x-0.5 transition-transform">Clear →</span>
               </button>
 
+              {/* USER'S SAVED ARCHITECTURES SECTION */}
+              {savedArchitectures.length > 0 && (
+                <div className="pt-1 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span className="font-semibold uppercase tracking-wider text-[10px] text-emerald-400 flex items-center gap-1">
+                      <FolderOpen className="w-3 h-3" /> My Saved Setups ({savedArchitectures.length})
+                    </span>
+                    {onOpenSaveModal && (
+                      <button
+                        onClick={onOpenSaveModal}
+                        className="text-[10px] font-mono text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        Manage
+                      </button>
+                    )}
+                  </div>
+                  {savedArchitectures.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-900/30 cursor-pointer transition-all group flex items-center justify-between gap-2"
+                    >
+                      <div 
+                        onClick={() => onLoadSavedArchitecture && onLoadSavedArchitecture(item)}
+                        className="min-w-0 flex-1"
+                      >
+                        <h4 className="font-bold text-xs text-emerald-200 group-hover:text-emerald-100 truncate">
+                          {item.name}
+                        </h4>
+                        <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-400/80 mt-0.5">
+                          <span>${item.summary.totalMonthlySpend.toLocaleString()}/mo</span>
+                          <span>•</span>
+                          <span>{item.summary.nodeCount} nodes</span>
+                        </div>
+                      </div>
+                      {onDeleteSavedArchitecture && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteSavedArchitecture(item.id);
+                          }}
+                          className="p-1 rounded text-gray-500 hover:text-rose-400 transition-colors"
+                          title="Delete saved setup"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* STANDARD BUILT-IN TEMPLATES */}
               <div className="flex items-center justify-between text-xs text-gray-400 mb-2 pt-1">
                 <span className="font-semibold uppercase tracking-wider text-[10px]">Architecture Templates</span>
                 <span className="text-[10px] font-mono text-blue-400">1-Click Load</span>
