@@ -180,8 +180,9 @@ export function App() {
 
   // Cast nodes and edges for evaluation
   const typedNodes = useMemo(() => {
-    return nodes.map((n: any) => ({
+    return nodes.map((n: any, idx: number) => ({
       id: n.id,
+      position: n.position || { x: 100 + (idx % 3) * 280, y: 80 + Math.floor(idx / 3) * 180 },
       data: (n.data || {}) as unknown as TopologyNodeData,
     }));
   }, [nodes]);
@@ -330,7 +331,16 @@ export function App() {
   // Register WebMCP bridge update callback
   useEffect(() => {
     webMCPBridge.onTopologyUpdate((nextNodes, nextEdges, nextTier) => {
-      setNodes(nextNodes.map(n => ({ ...n, type: 'customNode' })));
+      setNodes(
+        nextNodes.map((n, idx) => ({
+          ...n,
+          type: 'customNode',
+          position: n.position || {
+            x: 100 + (idx % 3) * 280,
+            y: 80 + Math.floor(idx / 3) * 180,
+          },
+        }))
+      );
       setEdges(nextEdges.map(e => ({ ...e, type: 'customEdge' })));
       if (nextTier) setPricingTier(nextTier);
     });

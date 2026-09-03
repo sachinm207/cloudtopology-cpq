@@ -22,7 +22,7 @@ export interface WebMCPToolDefinition {
 }
 
 export class WebMCPBridge {
-  private nodes: Array<{ id: string; data: TopologyNodeData }> = [];
+  private nodes: Array<{ id: string; position?: { x: number; y: number }; data: TopologyNodeData }> = [];
   private edges: Array<{ id: string; source: string; target: string; data?: TopologyEdgeData }> = [];
   private pricingTier: PricingTier = 'on_demand';
   private tools: Map<string, WebMCPToolDefinition> = new Map();
@@ -42,7 +42,7 @@ export class WebMCPBridge {
   }
 
   public updateState(
-    nodes: Array<{ id: string; data: TopologyNodeData }>,
+    nodes: Array<{ id: string; position?: { x: number; y: number }; data: TopologyNodeData }>,
     edges: Array<{ id: string; source: string; target: string; data?: TopologyEdgeData }>,
     pricingTier: PricingTier
   ) {
@@ -248,7 +248,7 @@ export class WebMCPBridge {
     // Tool 5: optimize_cloud_architecture
     register({
       name: 'optimize_cloud_architecture',
-      description: 'Applies automated FinOps architectural optimizations such as converting eligible nodes to 3-year savings plans or Spot, shifting traffic to Cloudflare zero-egress routes, or resolving GDPR violations.',
+      description: 'Safely updates the interactive canvas with FinOps architectural optimizations (e.g. switching to 3-year savings plans or Spot, routing traffic through Cloudflare zero-egress edge caching, or resolving GDPR data residency). Safe visual simulation workspace.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -316,6 +316,7 @@ export class WebMCPBridge {
             const edgeNodeId = `cf-edge-${Date.now()}`;
             updatedNodes.push({
               id: edgeNodeId,
+              position: { x: 380, y: 50 },
               data: {
                 label: 'Cloudflare Global CDN & Edge Cache',
                 regionId: 'cf-global-edge',
@@ -328,6 +329,26 @@ export class WebMCPBridge {
                 monthlyCost: 50.00,
               },
             });
+
+            // Connect Cloudflare Edge to compute nodes if available
+            const computeNodes = updatedNodes.filter(n => n.data.serviceType === 'compute');
+            for (const cNode of computeNodes) {
+              const edgeExists = updatedEdges.some(e => e.source === edgeNodeId && e.target === cNode.id);
+              if (!edgeExists) {
+                updatedEdges.push({
+                  id: `e-${edgeNodeId}-${cNode.id}`,
+                  source: edgeNodeId,
+                  target: cNode.id,
+                  data: {
+                    monthlyTransferGb: 2500,
+                    connectionType: 'cloudflare_tunnel',
+                    encrypted: true,
+                    monthlyEgressCost: 0,
+                    calculatedLatencyMs: 8.5,
+                  },
+                });
+              }
+            }
 
             updatedEdges = updatedEdges.map(e => ({
               ...e,
@@ -364,7 +385,7 @@ export class WebMCPBridge {
     // Tool 6: apply_topology_to_canvas (Universal Normalizer for Flat or Nested AI shapes)
     register({
       name: 'apply_topology_to_canvas',
-      description: 'Directly modifies the live interactive React Flow canvas by adding, removing, or updating nodes and connections. Accepts both flat and nested node formats.',
+      description: 'Safely modifies the interactive React Flow visual canvas by placing, repositioning, or updating nodes and connections in the browser workspace.',
       inputSchema: {
         type: 'object',
         properties: {
