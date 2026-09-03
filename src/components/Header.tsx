@@ -11,7 +11,8 @@ import {
   FileJson,
   BookOpen,
   Cpu,
-  Tag
+  Tag,
+  AlertCircle
 } from 'lucide-react';
 import { TopologyCostSummary, PricingTier } from '../types/topology';
 
@@ -38,6 +39,22 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <div className="flex flex-col border-b border-gray-800/80 bg-[#0B0F19]/95 backdrop-blur-lg z-20 select-none">
+      {/* TOP DISCLAIMER STRIP: Educational & Beta Status */}
+      <div className="bg-amber-950/30 border-b border-amber-500/20 px-4 py-1 text-[11px] text-amber-300/90 flex items-center justify-between font-mono">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold text-[9px] border border-amber-500/30 flex items-center gap-1">
+            <AlertCircle className="w-2.5 h-2.5" />
+            EXPERIMENTAL BETA
+          </span>
+          <span className="truncate">
+            🎓 For Educational & Architectural Simulation Purposes Only • Pre-Production Demonstration • Verify official rate cards before procurement.
+          </span>
+        </div>
+        <span className="text-[10px] text-amber-400/70 hidden lg:inline">
+          v1.0-beta • Open-Source WebMCP Demo
+        </span>
+      </div>
+
       {/* ROW 1: Brand Logo, Title, and Live FinOps KPI Metrics */}
       <div className="h-14 px-4 flex items-center justify-between border-b border-gray-850">
         {/* Brand & Title */}
