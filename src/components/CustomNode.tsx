@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Server, Database, HardDrive, Globe, Shield, Layers } from 'lucide-react';
+import { Server, Database, HardDrive, Globe, Shield, Layers, Sparkles, Link2Off } from 'lucide-react';
 import { TopologyNodeData } from '../types/topology';
 import { CLOUD_REGIONS, RESOURCE_SKUS } from '../data/catalog';
 
@@ -81,20 +81,44 @@ export const CustomNode = memo((props: any) => {
     : `${data.instances || 1}x`;
 
   const shortSku = sku?.name ? sku.name.split(' ')[1] || sku.name : data.skuId || 'Standard';
+  const isUnconnected = data.isConnected === false;
+  const isNew = !!data.isNew;
 
   return (
     <div
-      className={`relative rounded-xl border p-2.5 shadow-xl backdrop-blur-md transition-all duration-200 min-w-[210px] max-w-[245px] ${
+      className={`relative rounded-xl border p-2.5 shadow-xl backdrop-blur-md transition-all duration-300 min-w-[210px] max-w-[245px] ${
         providerStyle.bg
-      } ${providerStyle.border} ${
-        selected ? 'ring-2 ring-blue-400 scale-[1.02] shadow-blue-500/20' : ''
+      } ${
+        isNew 
+          ? 'ring-4 ring-emerald-400/80 ring-offset-2 ring-offset-gray-950 shadow-2xl shadow-emerald-500/40 animate-pulse border-emerald-400' 
+          : isUnconnected 
+            ? 'border-dashed border-amber-400/70 shadow-amber-500/10' 
+            : providerStyle.border
+      } ${
+        selected ? 'ring-2 ring-blue-400 scale-[1.02] shadow-blue-500/30' : ''
       }`}
     >
+      {/* Newly Added Pulsing Tag Banner */}
+      {isNew && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-emerald-500 text-gray-950 font-mono text-[9px] font-extrabold flex items-center gap-1 shadow-lg shadow-emerald-500/40 animate-bounce z-20 whitespace-nowrap">
+          <Sparkles className="w-2.5 h-2.5" />
+          JUST ADDED
+        </div>
+      )}
+
+      {/* Unconnected Warning Tag */}
+      {isUnconnected && !isNew && (
+        <div className="absolute -top-2.5 right-2 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono text-[8px] font-semibold flex items-center gap-0.5 shadow-sm z-20">
+          <Link2Off className="w-2 h-2" />
+          Unconnected
+        </div>
+      )}
+
       {/* Connection Handles */}
-      <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900" />
-      <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900" />
-      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900" />
-      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900" />
+      <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
+      <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
+      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
+      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
 
       {/* Row 1: Icon + Title + Plan & GDPR Badges */}
       <div className="flex items-center justify-between gap-1.5 mb-1.5">

@@ -20,7 +20,7 @@ export interface CloudRegion {
   lat: number;
   lng: number;
   isEU: boolean;
-  carbonIntensity: number;
+  carbonIntensity: number; // gCO2eq/kWh
 }
 
 export interface ResourceSKU {
@@ -66,6 +66,8 @@ export interface TopologyNodeData extends Record<string, unknown> {
   isPII: boolean;
   pricingTier: PricingTier;
   monthlyCost: number;
+  isNew?: boolean;
+  isConnected?: boolean;
   notes?: string;
 }
 
@@ -95,6 +97,7 @@ export interface TopologyCostSummary {
   databaseSpend: number;
   storageSpend: number;
   edgeSpend: number;
+  networkSpend?: number;
   egressSpend: number;
   onDemandBaseline: number;
   totalMonthlySavings: number;
@@ -102,7 +105,7 @@ export interface TopologyCostSummary {
   p95LatencyMs: number;
   totalCarbonKgPerMonth: number;
   violations: ComplianceViolation[];
-  activeDiscountPlan: PricingTier;
+  activeDiscountPlan?: PricingTier;
 }
 
 export interface CPQQuote {

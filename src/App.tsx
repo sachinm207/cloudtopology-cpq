@@ -42,18 +42,19 @@ const edgeTypes = {
 export function App() {
   const initialPreset = ARCHITECTURE_PRESETS[0];
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>(
     initialPreset.nodes.map((n) => ({
       ...n,
       type: 'customNode',
       data: {
         ...n.data,
         pricingTier: initialPreset.pricingTier,
+        isConnected: true,
       },
     }))
   );
 
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>(
     initialPreset.edges.map((e) => ({
       ...e,
       type: 'customEdge',
@@ -86,6 +87,20 @@ export function App() {
       data: e.data as unknown as TopologyEdgeData | undefined,
     }));
   }, [edges]);
+
+  // Keep node connection state updated
+  const renderedNodes = useMemo(() => {
+    return nodes.map((n) => {
+      const isConnected = edges.some((e) => e.source === n.id || e.target === n.id);
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          isConnected,
+        },
+      };
+    });
+  }, [nodes, edges]);
 
   // Re-calculate FinOps summary
   const summary = useMemo(() => {
@@ -180,6 +195,8 @@ export function App() {
         data: {
           ...n.data,
           pricingTier: preset.pricingTier,
+          isConnected: true,
+          isNew: false,
         },
       }))
     );
@@ -193,7 +210,7 @@ export function App() {
     setSelectedNodeId(null);
   };
 
-  // Add new node from palette
+  // Add new node from palette with glowing "JUST ADDED" animation & center placement
   const handleAddNode = (
     provider: CloudProvider,
     serviceType: ServiceType,
@@ -206,8 +223,8 @@ export function App() {
       id,
       type: 'customNode',
       position: {
-        x: 250 + Math.random() * 200,
-        y: 150 + Math.random() * 150,
+        x: 350 + Math.random() * 120,
+        y: 200 + Math.random() * 120,
       },
       data: {
         label: sku?.name || 'New Resource',
@@ -220,11 +237,22 @@ export function App() {
         isPII: serviceType === 'database',
         pricingTier,
         monthlyCost: sku?.monthlyPrice || 100,
+        isNew: true,
+        isConnected: false,
       },
     };
 
     setNodes((nds) => [...nds, newNode]);
     setSelectedNodeId(id);
+
+    // Clear "JUST ADDED" glowing animation after 6 seconds
+    setTimeout(() => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, isNew: false } } : n
+        )
+      );
+    }, 6000);
   };
 
   // Update node data
@@ -256,6 +284,10 @@ export function App() {
   // Node selection click
   const onNodeClick = (_: React.MouseEvent, node: Node) => {
     setSelectedNodeId(node.id);
+    // Dismiss "isNew" animation on click
+    setNodes((nds) =>
+      nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, isNew: false } } : n))
+    );
   };
 
   const onPaneClick = () => {
@@ -305,7 +337,7 @@ export function App() {
         {/* Center Visual Graph Canvas */}
         <main className="flex-1 h-full w-full relative" style={{ height: '100%', width: '100%' }}>
           <ReactFlow
-            nodes={nodes}
+            nodes={renderedNodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
@@ -374,7 +406,7 @@ export function App() {
         onClose={() => setIsHowToUseOpen(false)}
       />
 
-      {/* WebMCP Guide & 7 Examples Modal */}
+      {/* WebMCP Guide & 8 Examples Modal */}
       <WebMCPGuideModal
         isOpen={isWebMCPGuideOpen}
         onClose={() => setIsWebMCPGuideOpen(false)}
