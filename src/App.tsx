@@ -82,12 +82,27 @@ export function App() {
       const saved = localStorage.getItem(STORAGE_KEY_ACTIVE);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-          return {
-            nodes: parsed.nodes,
-            edges: parsed.edges,
-            pricingTier: parsed.pricingTier || 'savings_plan_1yr',
-          };
+        if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges) && parsed.nodes.length > 0) {
+          const allValid = parsed.nodes.every(
+            (n: any) => n && typeof n.id === 'string' && n.data && typeof n.data === 'object' && n.data.skuId
+          );
+          if (allValid) {
+            return {
+              nodes: parsed.nodes.map((n: any) => ({
+                ...n,
+                type: 'customNode',
+                data: {
+                  ...n.data,
+                  isConnected: true,
+                },
+              })),
+              edges: parsed.edges.map((e: any) => ({
+                ...e,
+                type: 'customEdge',
+              })),
+              pricingTier: parsed.pricingTier || 'savings_plan_1yr',
+            };
+          }
         }
       }
     } catch (e) {

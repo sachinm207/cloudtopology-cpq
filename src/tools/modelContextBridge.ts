@@ -546,95 +546,88 @@ export class WebMCPBridge {
   private publishToWindow() {
     if (typeof window === 'undefined') return;
 
-    const toolList = Array.from(this.tools.values()).map(t => ({
-      name: t.name,
-      description: t.description,
-      inputSchema: t.inputSchema,
-      parameters: t.inputSchema,
-    }));
+    let targetContext: any = undefined;
 
-    const modelContext = {
-      tools: toolList,
-      callTool: async (name: string, args: any) => {
-        return await this.executeTool(name, args);
-      },
-      registerTool: (toolDef: any) => {
-        if (!toolDef || !toolDef.name) return;
-        this.tools.set(toolDef.name, {
-          name: toolDef.name,
-          description: toolDef.description || '',
-          inputSchema: toolDef.inputSchema || toolDef.parameters || { type: 'object', properties: {} },
-          execute: toolDef.execute || (async () => ({ success: true })),
-        });
-      },
-    };
-
-    // 1. Safe publication to window.modelContext
-    try {
-      (window as any).modelContext = modelContext;
-    } catch {
-      try {
-        Object.defineProperty(window, 'modelContext', {
-          value: modelContext,
-          writable: true,
-          configurable: true,
-        });
-      } catch (err) {
-        console.warn('Window modelContext binding notice:', err);
-      }
+    if (typeof navigator !== 'undefined' && (navigator as any).modelContext) {
+      targetContext = (navigator as any).modelContext;
+    } else if (typeof document !== 'undefined' && (document as any).modelContext) {
+      targetContext = (document as any).modelContext;
+    } else if (typeof window !== 'undefined' && (window as any).modelContext) {
+      targetContext = (window as any).modelContext;
     }
 
-    // 2. Safe publication to navigator.modelContext
-    try {
-      if (typeof navigator !== 'undefined') {
-        (navigator as any).modelContext = modelContext;
-      }
-    } catch {
+    if (!targetContext || typeof targetContext.registerTool !== 'function') {
+      const toolList = Array.from(this.tools.values()).map(t => ({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.inputSchema,
+        parameters: t.inputSchema,
+      }));
+
+      const customContext = {
+        tools: toolList,
+        getTools: () => Array.from(this.tools.values()),
+        executeTool: async (name: string, params: any) => {
+          return await this.executeTool(name, params);
+        },
+        callTool: async (name: string, args: any) => {
+          return await this.executeTool(name, args);
+        },
+        registerTool: (toolDef: any) => {
+          if (!toolDef || !toolDef.name) return;
+          this.tools.set(toolDef.name, {
+            name: toolDef.name,
+            description: toolDef.description || '',
+            inputSchema: toolDef.inputSchema || toolDef.parameters || { type: 'object', properties: {} },
+            execute: toolDef.execute || (async () => ({ success: true })),
+          });
+        },
+      };
+
       try {
-        Object.defineProperty(navigator, 'modelContext', {
-          value: modelContext,
-          writable: true,
-          configurable: true,
-        });
-      } catch {}
+        if (typeof window !== 'undefined' && !('modelContext' in window)) {
+          (window as any).modelContext = customContext;
+        }
+      } catch { /* ignore */ }
+
+      try {
+        if (typeof navigator !== 'undefined' && !('modelContext' in navigator)) {
+          Object.defineProperty(navigator, 'modelContext', {
+            value: customContext,
+            writable: true,
+            configurable: true,
+          });
+        }
+      } catch { /* ignore */ }
+
+      try {
+        if (typeof document !== 'undefined' && !('modelContext' in document)) {
+          Object.defineProperty(document, 'modelContext', {
+            value: customContext,
+            writable: true,
+            configurable: true,
+          });
+        }
+      } catch { /* ignore */ }
+
+      targetContext = customContext;
     }
 
-    // 3. Safe publication to document.modelContext (handling Chrome #enable-webmcp-testing getter-only mode)
-    try {
-      if (typeof document !== 'undefined') {
-        const existingDocContext = (document as any).modelContext;
-        if (existingDocContext && typeof existingDocContext.registerTool === 'function') {
-          for (const tool of this.tools.values()) {
-            try {
-              existingDocContext.registerTool({
-                name: tool.name,
-                description: tool.description,
-                inputSchema: tool.inputSchema,
-                parameters: tool.inputSchema,
-                execute: tool.execute,
-              });
-            } catch (regErr) {
-              console.warn('Native registerTool call notice:', regErr);
-            }
-          }
-        } else {
-          try {
-            (document as any).modelContext = modelContext;
-          } catch {
-            try {
-              Object.defineProperty(document, 'modelContext', {
-                value: modelContext,
-                writable: true,
-                configurable: true,
-              });
-            } catch (defErr) {
-              console.warn('Document modelContext property notice:', defErr);
-            }
-          }
+    // Now safely register our tools on whichever targetContext is active
+    if (targetContext && typeof targetContext.registerTool === 'function') {
+      for (const tool of this.tools.values()) {
+        try {
+          targetContext.registerTool({
+            name: tool.name,
+            description: tool.description,
+            inputSchema: tool.inputSchema,
+            parameters: tool.inputSchema,
+            execute: tool.execute,
+          });
+        } catch (e) {
+          console.warn(`[WebMCP] Note registering ${tool.name}:`, e);
         }
       }
-    } catch (docErr) {
-      console.warn('Document modelContext binding notice:', docErr);
     }
   }
 }
