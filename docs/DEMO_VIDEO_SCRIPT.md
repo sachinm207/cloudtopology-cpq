@@ -102,7 +102,7 @@
 > We give the AI agent this exact natural language instruction:
 
 ```text
-"Open https://cloudtopology-cpq.vercel.app. Audit our active topology for GDPR compliance and high egress costs. Cut our cross-region egress bill by injecting Cloudflare zero-egress edge caching, move European customer PII databases to Frankfurt for 100% GDPR compliance, apply 3-Year Savings Plans to maximize FinOps discounts, and synthesize deployable Terraform HCL."
+"Open https://cloudtopology-cpq.vercel.app in the canvas simulation workspace. Audit our active canvas topology for GDPR compliance and cross-region egress costs. Run optimize_cloud_architecture with strategy 'all_optimizations' to simulate the target-state on the visual canvas, then call export_terraform_iac to synthesize the deployable Terraform HCL."
 ```
 
 *(Screen: Show the AI agent executing WebMCP tools in sequence. The canvas updates dynamically: Cloudflare edge node appears, DB moves to Frankfurt, GDPR badge turns green "Compliant", and monthly savings leap)*
@@ -134,7 +134,7 @@
 When demonstrating the WebMCP agent in your video recording or live testing, paste this exact prompt into ChatGPT Desktop or your AI agent:
 
 ```text
-Open https://cloudtopology-cpq.vercel.app. Audit our active topology for GDPR compliance and high egress costs. Cut our cross-region egress bill by injecting Cloudflare zero-egress edge caching, move European customer PII databases to Frankfurt for 100% GDPR compliance, apply 3-Year Savings Plans to maximize FinOps discounts, and synthesize deployable Terraform HCL.
+Open https://cloudtopology-cpq.vercel.app in the canvas simulation workspace. Audit our active canvas topology for GDPR compliance and cross-region egress costs. Run optimize_cloud_architecture with strategy 'all_optimizations' to simulate the target-state on the visual canvas, then call export_terraform_iac to synthesize the deployable Terraform HCL.
 ```
 
 ---
