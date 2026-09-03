@@ -2,7 +2,6 @@ import {
   TopologyNodeData, 
   TopologyEdgeData, 
   PricingTier, 
-
   CloudProvider,
   ServiceType
 } from '../types/topology';
@@ -34,8 +33,12 @@ export class WebMCPBridge {
   ) => void;
 
   constructor() {
-    this.registerTools();
-    this.publishToWindow();
+    try {
+      this.registerTools();
+      this.publishToWindow();
+    } catch (err) {
+      console.warn('WebMCPBridge initialization notice:', err);
+    }
   }
 
   public updateState(
@@ -541,20 +544,71 @@ export class WebMCPBridge {
   }
 
   private publishToWindow() {
-    if (typeof window !== 'undefined') {
-      const modelContext = {
-        tools: Array.from(this.tools.values()).map(t => ({
-          name: t.name,
-          description: t.description,
-          parameters: t.inputSchema,
-        })),
-        callTool: async (name: string, args: any) => {
-          return await this.executeTool(name, args);
-        },
-      };
+    if (typeof window === 'undefined') return;
 
+    const toolList = Array.from(this.tools.values()).map(t => ({
+      name: t.name,
+      description: t.description,
+      parameters: t.inputSchema,
+    }));
+
+    const modelContext = {
+      tools: toolList,
+      callTool: async (name: string, args: any) => {
+        return await this.executeTool(name, args);
+      },
+    };
+
+    // Safe publication to window.modelContext
+    try {
       (window as any).modelContext = modelContext;
-      (document as any).modelContext = modelContext;
+    } catch {
+      try {
+        Object.defineProperty(window, 'modelContext', {
+          value: modelContext,
+          writable: true,
+          configurable: true,
+        });
+      } catch (err) {
+        console.warn('Window modelContext binding notice:', err);
+      }
+    }
+
+    // Safe publication to document.modelContext (handling Chrome #enable-webmcp-testing getter-only mode)
+    try {
+      if (typeof document !== 'undefined') {
+        const existingDocContext = (document as any).modelContext;
+        if (existingDocContext && typeof existingDocContext.registerTool === 'function') {
+          for (const tool of this.tools.values()) {
+            try {
+              existingDocContext.registerTool({
+                name: tool.name,
+                description: tool.description,
+                parameters: tool.inputSchema,
+                execute: tool.execute,
+              });
+            } catch (regErr) {
+              console.warn('Native registerTool call notice:', regErr);
+            }
+          }
+        } else {
+          try {
+            (document as any).modelContext = modelContext;
+          } catch {
+            try {
+              Object.defineProperty(document, 'modelContext', {
+                value: modelContext,
+                writable: true,
+                configurable: true,
+              });
+            } catch (defErr) {
+              console.warn('Document modelContext property notice:', defErr);
+            }
+          }
+        }
+      }
+    } catch (docErr) {
+      console.warn('Document modelContext binding notice:', docErr);
     }
   }
 }
