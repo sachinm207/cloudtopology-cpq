@@ -48,13 +48,13 @@ const STORAGE_KEY_THEME = 'cloudtopology_theme_v1';
 export function App() {
   const initialPreset = ARCHITECTURE_PRESETS[1] || ARCHITECTURE_PRESETS[0];
 
-  // Theme state: dark | light
+  // Theme state: light by default
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
       const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
       if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
     } catch {}
-    return 'dark';
+    return 'light';
   });
 
   // Sync theme class with document element
