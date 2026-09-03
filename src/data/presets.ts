@@ -12,6 +12,15 @@ export interface ArchitecturePreset {
 
 export const ARCHITECTURE_PRESETS: ArchitecturePreset[] = [
   {
+    id: 'blank-canvas',
+    name: '✨ Blank Canvas (Start Scratch)',
+    tagline: 'Clean slate for custom multi-cloud topology design',
+    description: 'Start with an empty workspace. Add compute, databases, storage, and serverless nodes from the palette or WebMCP prompt.',
+    pricingTier: 'on_demand',
+    nodes: [],
+    edges: [],
+  },
+  {
     id: 'global-ecommerce',
     name: 'Global E-Commerce Web App',
     tagline: 'Multi-region frontend + Aurora Postgres + Cloudflare Edge',

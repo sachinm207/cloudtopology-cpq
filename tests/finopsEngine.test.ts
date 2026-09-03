@@ -38,7 +38,7 @@ describe('FinOps Calculation Engine', () => {
   });
 
   it('detects GDPR violations when EU PII database connects to US non-EU node', () => {
-    const preset = ARCHITECTURE_PRESETS[2]; // GDPR FinTech preset
+    const preset = ARCHITECTURE_PRESETS.find(p => p.id === 'fintech-gdpr-strict')!; // GDPR FinTech preset
     const summary = evaluateTopology(
       preset.nodes as any,
       preset.edges as any,
@@ -52,7 +52,7 @@ describe('FinOps Calculation Engine', () => {
   });
 
   it('generates valid Terraform HCL containing providers and resources', () => {
-    const preset = ARCHITECTURE_PRESETS[0];
+    const preset = ARCHITECTURE_PRESETS.find(p => p.id === 'global-ecommerce')!;
     const hcl = generateTerraformHCL(preset.nodes as any, preset.edges as any);
 
     expect(hcl).toContain('terraform {');

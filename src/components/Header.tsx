@@ -12,7 +12,8 @@ import {
   BookOpen,
   Cpu,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { TopologyCostSummary, PricingTier } from '../types/topology';
 
@@ -25,6 +26,7 @@ interface HeaderProps {
   onOpenRateUpload: () => void;
   onOpenHowToUse: () => void;
   onOpenWebMCPGuide: () => void;
+  onClearCanvas: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRateUpload,
   onOpenHowToUse,
   onOpenWebMCPGuide,
+  onClearCanvas,
 }) => {
   return (
     <div className="flex flex-col border-b border-gray-800/80 bg-[#0B0F19]/95 backdrop-blur-lg z-20 select-none">
@@ -157,6 +160,16 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="h-11 px-4 flex items-center justify-between bg-gray-950/40 text-xs">
         {/* Left Side: FinOps Controls & Exports */}
         <div className="flex items-center gap-2">
+          {/* New / Clear Canvas Button */}
+          <button
+            onClick={onClearCanvas}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+            title="Clear Canvas & Start Scratch"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Canvas</span>
+          </button>
+
           {/* Commitment Plan Switcher */}
           <div className="flex items-center gap-1 bg-gray-900 border border-gray-700/80 rounded-lg px-2 py-1">
             <Tag className="w-3 h-3 text-emerald-400" />

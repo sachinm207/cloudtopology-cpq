@@ -30,6 +30,7 @@ import { generateTerraformHCL } from './engine/terraformGenerator';
 import { webMCPBridge } from './tools/modelContextBridge';
 import { RESOURCE_SKUS } from './data/catalog';
 import { CustomRateSheet, applyRateSheetToCatalog } from './engine/rateCardParser';
+import { Sparkles, PlusCircle, Layers, Cpu } from 'lucide-react';
 
 const nodeTypes = {
   customNode: CustomNode,
@@ -40,7 +41,8 @@ const edgeTypes = {
 };
 
 export function App() {
-  const initialPreset = ARCHITECTURE_PRESETS[0];
+  // Load Global E-Commerce Web App by default (index 1)
+  const initialPreset = ARCHITECTURE_PRESETS[1] || ARCHITECTURE_PRESETS[0];
 
   const [nodes, setNodes, onNodesChange] = useNodesState<any>(
     initialPreset.nodes.map((n) => ({
@@ -61,7 +63,7 @@ export function App() {
     }))
   );
 
-  const [pricingTier, setPricingTier] = useState<PricingTier>(initialPreset.pricingTier);
+  const [pricingTier, setPricingTier] = useState<PricingTier>(initialPreset.pricingTier || 'on_demand');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   
   // Modals state
@@ -110,7 +112,7 @@ export function App() {
   // Global Plan Change Handler - updates global and all active node cards
   const handleGlobalPricingTierChange = (newTier: PricingTier) => {
     setPricingTier(newTier);
-    setNodes((nds) =>
+    setNodes((nds: any[]) =>
       nds.map((node) => ({
         ...node,
         data: {
@@ -121,12 +123,19 @@ export function App() {
     );
   };
 
+  // Clear Canvas to Blank Slate
+  const handleClearCanvas = () => {
+    setNodes([]);
+    setEdges([]);
+    setSelectedNodeId(null);
+  };
+
   // Custom Rate Sheet / EDA Application
   const handleApplyCustomRateSheet = (rateSheet: CustomRateSheet) => {
     applyRateSheetToCatalog(RESOURCE_SKUS, rateSheet);
     
     // Force re-render of active nodes
-    setNodes((nds) =>
+    setNodes((nds: any[]) =>
       nds.map((node) => {
         const sku = RESOURCE_SKUS.find((s) => s.id === (node.data as any)?.skuId);
         let baseCost = sku?.monthlyPrice || 0;
@@ -242,12 +251,12 @@ export function App() {
       },
     };
 
-    setNodes((nds) => [...nds, newNode]);
+    setNodes((nds: any[]) => [...nds, newNode]);
     setSelectedNodeId(id);
 
     // Clear "JUST ADDED" glowing animation after 6 seconds
     setTimeout(() => {
-      setNodes((nds) =>
+      setNodes((nds: any[]) =>
         nds.map((n) =>
           n.id === id ? { ...n, data: { ...n.data, isNew: false } } : n
         )
@@ -257,7 +266,7 @@ export function App() {
 
   // Update node data
   const handleUpdateNode = (nodeId: string, updatedData: Partial<TopologyNodeData>) => {
-    setNodes((nds) =>
+    setNodes((nds: any[]) =>
       nds.map((node) => {
         if (node.id === nodeId) {
           const merged = { ...node.data, ...updatedData } as TopologyNodeData;
@@ -276,8 +285,8 @@ export function App() {
 
   // Delete node
   const handleDeleteNode = (nodeId: string) => {
-    setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-    setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+    setNodes((nds: any[]) => nds.filter((n) => n.id !== nodeId));
+    setEdges((eds: any[]) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
     setSelectedNodeId(null);
   };
 
@@ -285,7 +294,7 @@ export function App() {
   const onNodeClick = (_: React.MouseEvent, node: Node) => {
     setSelectedNodeId(node.id);
     // Dismiss "isNew" animation on click
-    setNodes((nds) =>
+    setNodes((nds: any[]) =>
       nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, isNew: false } } : n))
     );
   };
@@ -321,6 +330,7 @@ export function App() {
         onOpenRateUpload={() => setIsRateUploadOpen(true)}
         onOpenHowToUse={() => setIsHowToUseOpen(true)}
         onOpenWebMCPGuide={() => setIsWebMCPGuideOpen(true)}
+        onClearCanvas={handleClearCanvas}
       />
 
       {/* Main Workspace: Left Sidebar + Center React Flow Canvas */}
@@ -367,6 +377,46 @@ export function App() {
               maskColor="rgba(11, 15, 25, 0.7)"
             />
           </ReactFlow>
+
+          {/* Empty Canvas Overlay State */}
+          {renderedNodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="p-8 rounded-2xl bg-[#0B0F19]/90 border border-gray-800/90 backdrop-blur-xl max-w-md text-center shadow-2xl pointer-events-auto space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/20 shadow-md shadow-blue-500/10">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-100 tracking-tight">Empty Canvas — Ready to Build</h3>
+                  <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    Start architecting from scratch! Place compute and database nodes from the palette, load a pre-built template, or prompt an AI coding agent via WebMCP.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 pt-2 justify-center">
+                  <button
+                    onClick={() => handleAddNode('aws', 'compute', 'aws-ec2-m6i-xlarge', 'aws-us-east-1')}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" />
+                    <span>Add First Node</span>
+                  </button>
+                  <button
+                    onClick={() => handleLoadPreset(ARCHITECTURE_PRESETS[1])}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Load Template</span>
+                  </button>
+                  <button
+                    onClick={() => setIsWebMCPGuideOpen(true)}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-600/40 hover:to-teal-600/40 border border-emerald-500/40 text-emerald-300 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WebMCP Guide</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Info Floating Chip */}
           <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 rounded-lg bg-gray-900/80 backdrop-blur-md border border-gray-800 text-[11px] text-gray-400 font-mono pointer-events-none flex items-center gap-2">

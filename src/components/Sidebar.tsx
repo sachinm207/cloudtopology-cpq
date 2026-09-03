@@ -224,11 +224,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Tab 1: Architecture Presets */}
           {activeTab === 'presets' && (
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+              {/* Quick Blank Canvas Button */}
+              <button
+                onClick={() => onLoadPreset(ARCHITECTURE_PRESETS[0])}
+                className="w-full p-2.5 rounded-xl border border-blue-500/40 bg-blue-950/20 hover:bg-blue-900/30 text-blue-300 text-xs font-semibold flex items-center justify-between transition-all cursor-pointer shadow-sm group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded-lg bg-blue-500/20 text-blue-300">✨</span>
+                  <span>Start with Blank Canvas</span>
+                </div>
+                <span className="text-[10px] font-mono text-blue-400 group-hover:translate-x-0.5 transition-transform">Clear →</span>
+              </button>
+
+              <div className="flex items-center justify-between text-xs text-gray-400 mb-2 pt-1">
                 <span className="font-semibold uppercase tracking-wider text-[10px]">Architecture Templates</span>
                 <span className="text-[10px] font-mono text-blue-400">1-Click Load</span>
               </div>
-              {ARCHITECTURE_PRESETS.map((preset) => (
+              {ARCHITECTURE_PRESETS.slice(1).map((preset) => (
                 <div
                   key={preset.id}
                   onClick={() => onLoadPreset(preset)}

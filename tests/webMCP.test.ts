@@ -3,7 +3,7 @@ import { webMCPBridge } from '../src/tools/modelContextBridge';
 import { ARCHITECTURE_PRESETS } from '../src/data/presets';
 
 describe('WebMCP Standard Compliance & Tool Registration Suite', () => {
-  const preset = ARCHITECTURE_PRESETS[0];
+  const preset = ARCHITECTURE_PRESETS.find(p => p.id === 'global-ecommerce')!;
 
   beforeEach(() => {
     webMCPBridge.updateState(
