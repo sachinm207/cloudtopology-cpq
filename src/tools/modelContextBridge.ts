@@ -1,14 +1,17 @@
 import { 
   TopologyNodeData, 
   TopologyEdgeData, 
-  PricingTier 
+  PricingTier, 
+
+  CloudProvider,
+  ServiceType
 } from '../types/topology';
 import { CLOUD_REGIONS, RESOURCE_SKUS, PROVIDER_EGRESS_RULES } from '../data/catalog';
 import { evaluateTopology, generateCPQQuote } from '../engine/finopsEngine';
 import { generateTerraformHCL } from '../engine/terraformGenerator';
 import { CustomRateSheet, applyRateSheetToCatalog } from '../engine/rateCardParser';
 
-export interface WebMCPTool {
+export interface WebMCPToolDefinition {
   name: string;
   description: string;
   inputSchema: {
@@ -16,137 +19,93 @@ export interface WebMCPTool {
     properties: Record<string, any>;
     required?: string[];
   };
-  execute: (input: any) => Promise<any> | any;
-}
-
-export interface ModelContext {
-  registerTool: (tool: WebMCPTool) => void;
-  getTools?: () => WebMCPTool[];
-}
-
-declare global {
-  interface Window {
-    modelContext?: ModelContext;
-  }
-  interface Document {
-    modelContext?: ModelContext;
-  }
-  interface Navigator {
-    modelContext?: ModelContext;
-  }
+  execute: (input: any) => Promise<any>;
 }
 
 export class WebMCPBridge {
   private nodes: Array<{ id: string; data: TopologyNodeData }> = [];
   private edges: Array<{ id: string; source: string; target: string; data?: TopologyEdgeData }> = [];
   private pricingTier: PricingTier = 'on_demand';
-  private onTopologyUpdateCallback?: (nodes: any[], edges: any[], pricingTier: PricingTier) => void;
-  private registeredTools: Map<string, WebMCPTool> = new Map();
+  private tools: Map<string, WebMCPToolDefinition> = new Map();
+  private onTopologyUpdateCallback?: (
+    nodes: Array<{ id: string; position?: { x: number; y: number }; data: TopologyNodeData }>, 
+    edges: Array<{ id: string; source: string; target: string; data?: TopologyEdgeData }>,
+    tier?: PricingTier
+  ) => void;
 
   constructor() {
-    this.initModelContext();
+    this.registerTools();
+    this.publishToWindow();
   }
 
   public updateState(
     nodes: Array<{ id: string; data: TopologyNodeData }>,
     edges: Array<{ id: string; source: string; target: string; data?: TopologyEdgeData }>,
-    pricingTier: PricingTier = 'on_demand'
+    pricingTier: PricingTier
   ) {
     this.nodes = nodes;
     this.edges = edges;
     this.pricingTier = pricingTier;
   }
 
-  public onTopologyUpdate(callback: (nodes: any[], edges: any[], pricingTier: PricingTier) => void) {
+  public onTopologyUpdate(
+    callback: (
+      nodes: Array<{ id: string; position?: { x: number; y: number }; data: TopologyNodeData }>, 
+      edges: Array<{ id: string; source: string; target: string; data?: TopologyEdgeData }>,
+      tier?: PricingTier
+    ) => void
+  ) {
     this.onTopologyUpdateCallback = callback;
   }
 
-  private initModelContext() {
-    const registry = {
-      registerTool: (tool: WebMCPTool) => {
-        this.registeredTools.set(tool.name, tool);
-      },
-      getTools: () => Array.from(this.registeredTools.values()),
-    };
-
-    const bindModelContext = (target: any) => {
-      if (!target) return;
-      try {
-        if (target.modelContext && typeof target.modelContext.registerTool === 'function') {
-          return;
-        }
-        Object.defineProperty(target, 'modelContext', {
-          value: registry,
-          writable: true,
-          configurable: true,
-        });
-      } catch {
-        try {
-          target.modelContext = registry;
-        } catch {
-          // Safely ignored for read-only environments
-        }
-      }
-    };
-
-    if (typeof window !== 'undefined') bindModelContext(window);
-    if (typeof document !== 'undefined') bindModelContext(document);
-    if (typeof navigator !== 'undefined') bindModelContext(navigator);
-
-    this.registerAllTools();
-  }
-
-  private registerAllTools() {
-    const register = (tool: WebMCPTool) => {
-      this.registeredTools.set(tool.name, tool);
-      if (typeof document !== 'undefined' && document.modelContext && typeof document.modelContext.registerTool === 'function') {
-        try {
-          document.modelContext.registerTool(tool);
-        } catch {}
-      }
-      if (typeof window !== 'undefined' && window.modelContext && typeof window.modelContext.registerTool === 'function') {
-        try {
-          window.modelContext.registerTool(tool);
-        } catch {}
-      }
+  private registerTools() {
+    const register = (tool: WebMCPToolDefinition) => {
+      this.tools.set(tool.name, tool);
     };
 
     // Tool 1: list_cloud_regions_and_skus
     register({
       name: 'list_cloud_regions_and_skus',
-      description: 'Lists all available cloud regions, compute instances, database engines, and egress rates across AWS, GCP, Azure, and Cloudflare, including allowed commitment and spot tiers.',
+      description: 'Lists all available cloud providers (AWS, GCP, Azure, Cloudflare), geographic datacenter regions, and real-world resource SKUs with allowed pricing tiers.',
       inputSchema: {
         type: 'object',
         properties: {
-          provider: {
-            type: 'string',
-            enum: ['all', 'aws', 'gcp', 'azure', 'cloudflare'],
-            description: 'Filter by cloud provider.',
+          provider: { 
+            type: 'string', 
+            enum: ['aws', 'gcp', 'azure', 'cloudflare'],
+            description: 'Optional filter by cloud provider' 
           },
           serviceType: {
             type: 'string',
-            enum: ['all', 'compute', 'database', 'storage', 'cdn_edge'],
-            description: 'Filter by service category.',
-          },
+            enum: ['compute', 'database', 'storage', 'cdn_edge'],
+            description: 'Optional filter by service type'
+          }
         },
       },
-      execute: async (input: { provider?: string; serviceType?: string }) => {
-        const providerFilter = input?.provider || 'all';
-        const serviceFilter = input?.serviceType || 'all';
+      execute: async (input: { provider?: CloudProvider; serviceType?: ServiceType }) => {
+        let filteredRegions = Object.values(CLOUD_REGIONS);
+        let filteredSKUs = RESOURCE_SKUS;
 
-        const filteredRegions = Object.values(CLOUD_REGIONS).filter(r => 
-          providerFilter === 'all' || r.provider === providerFilter
-        );
+        if (input?.provider) {
+          filteredRegions = filteredRegions.filter(r => r.provider === input.provider);
+          filteredSKUs = filteredSKUs.filter(s => s.provider === input.provider);
+        }
 
-        const filteredSKUs = RESOURCE_SKUS.filter(s => {
-          const matchProvider = providerFilter === 'all' || s.provider === providerFilter;
-          const matchService = serviceFilter === 'all' || s.serviceType === serviceFilter;
-          return matchProvider && matchService;
-        });
+        if (input?.serviceType) {
+          filteredSKUs = filteredSKUs.filter(s => s.serviceType === input.serviceType);
+        }
 
         return {
           totalRegions: filteredRegions.length,
-          regions: filteredRegions,
+          regions: filteredRegions.map(r => ({
+            id: r.id,
+            name: r.name,
+            provider: r.provider,
+            city: r.city,
+            country: r.country,
+            isEU: r.isEU,
+            carbonIntensity: r.carbonIntensity,
+          })),
           totalSKUs: filteredSKUs.length,
           skus: filteredSKUs.map(s => ({
             id: s.id,
@@ -253,11 +212,11 @@ export class WebMCPBridge {
 
         return {
           success: true,
-          updatedEdgeId: input.edgeId,
+          edgeId: input.edgeId,
           newTransferGb: input.monthlyTransferGb,
           newEgressSpend: newSummary.egressSpend,
-          totalMonthlySpend: newSummary.totalMonthlySpend,
-          violations: newSummary.violations,
+          newTotalMonthlySpend: newSummary.totalMonthlySpend,
+          p95LatencyMs: newSummary.p95LatencyMs,
         };
       },
     });
@@ -265,7 +224,7 @@ export class WebMCPBridge {
     // Tool 4: validate_compliance_and_latency
     register({
       name: 'validate_compliance_and_latency',
-      description: 'Performs a comprehensive audit of GDPR data residency rules, cross-border PII transfers, unencrypted connections, and 95th-percentile network latency.',
+      description: 'Audits active topology for GDPR EU data residency compliance, cross-region egress cost spikes, unencrypted connections, and high fiber latency.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -273,12 +232,12 @@ export class WebMCPBridge {
       execute: async () => {
         const summary = evaluateTopology(this.nodes, this.edges, this.pricingTier);
         return {
-          gdprCompliant: summary.violations.filter(v => v.category === 'GDPR_DATA_RESIDENCY').length === 0,
+          compliant: summary.violations.length === 0,
+          gdprCompliant: summary.violations.length === 0,
           totalViolations: summary.violations.length,
           violations: summary.violations,
-          averageGlobalLatencyMs: summary.averageGlobalLatencyMs,
           p95LatencyMs: summary.p95LatencyMs,
-          carbonKgMonthly: summary.totalCarbonKgPerMonth,
+          totalCarbonKgPerMonth: summary.totalCarbonKgPerMonth,
         };
       },
     });
@@ -286,15 +245,15 @@ export class WebMCPBridge {
     // Tool 5: optimize_cloud_architecture
     register({
       name: 'optimize_cloud_architecture',
-      description: 'Automatically analyzes the infrastructure and applies FinOps cost-cutting, edge caching, Spot optimization for stateless compute, and GDPR compliance fixes.',
+      description: 'Applies automated FinOps architectural optimizations such as converting eligible nodes to 3-year savings plans or Spot, shifting traffic to Cloudflare zero-egress routes, or resolving GDPR violations.',
       inputSchema: {
         type: 'object',
         properties: {
           strategy: {
             type: 'string',
             enum: ['cost_cut_savings_plans', 'spot_stateless_fleet', 'zero_egress_edge_cache', 'fix_gdpr_compliance', 'all_optimizations'],
-            description: 'Optimization strategy to apply.',
-          },
+            description: 'Optimization strategy to apply'
+          }
         },
         required: ['strategy'],
       },
@@ -313,7 +272,7 @@ export class WebMCPBridge {
               pricingTier: 'savings_plan_3yr',
             },
           }));
-          changesApplied.push('Switched eligible compute and database nodes to 3-Year Savings Plans (up to 55% discount).');
+          changesApplied.push('Upgraded global commitment tier to 3-Year Savings Plans (up to 55% discount).');
         }
 
         if (input.strategy === 'spot_stateless_fleet') {
@@ -399,33 +358,103 @@ export class WebMCPBridge {
       },
     });
 
-    // Tool 6: apply_topology_to_canvas
+    // Tool 6: apply_topology_to_canvas (Universal Normalizer for Flat or Nested AI shapes)
     register({
       name: 'apply_topology_to_canvas',
-      description: 'Directly modifies the live interactive React Flow canvas by adding, removing, or updating nodes and connections.',
+      description: 'Directly modifies the live interactive React Flow canvas by adding, removing, or updating nodes and connections. Accepts both flat and nested node formats.',
       inputSchema: {
         type: 'object',
         properties: {
-          nodes: { type: 'array', description: 'List of nodes with data' },
+          nodes: { type: 'array', description: 'List of nodes (flat or nested React Flow)' },
           edges: { type: 'array', description: 'List of connection edges' },
           pricingTier: { type: 'string', enum: ['on_demand', 'savings_plan_1yr', 'savings_plan_3yr', 'spot'] },
         },
       },
       execute: async (input: { nodes?: any[]; edges?: any[]; pricingTier?: PricingTier }) => {
-        const nextNodes = input.nodes || this.nodes;
-        const nextEdges = input.edges || this.edges;
         const nextTier = input.pricingTier || this.pricingTier;
+        
+        // Auto-normalize nodes whether passed as nested {id, position, data} or flat {id, label, skuId, ...}
+        const rawNodes = input.nodes || this.nodes;
+        const normalizedNodes = rawNodes.map((n: any, idx: number) => {
+          const id = n.id || `node-${idx}-${Date.now()}`;
+          const pos = n.position || { 
+            x: 100 + (idx % 3) * 280, 
+            y: 80 + Math.floor(idx / 3) * 180 
+          };
+          
+          const flatOrNestedData = n.data || n;
+          const skuId = flatOrNestedData.skuId || 'aws-ec2-m6i-xlarge';
+          const sku = RESOURCE_SKUS.find(s => s.id === skuId);
+          const provider = flatOrNestedData.provider || sku?.provider || 'aws';
+          const serviceType = flatOrNestedData.serviceType || sku?.serviceType || 'compute';
+          const instances = flatOrNestedData.instances || 1;
+          const regionId = flatOrNestedData.regionId || flatOrNestedData.region || 'aws-us-east-1';
+          const label = flatOrNestedData.label || sku?.name || 'Cloud Resource';
+          const isPII = !!flatOrNestedData.isPII;
+          const allocatedStorageGb = flatOrNestedData.allocatedStorageGb || (serviceType === 'storage' ? 1000 : undefined);
+          const nodeTier = flatOrNestedData.pricingTier || nextTier;
+          
+          let baseCost = sku?.monthlyPrice || flatOrNestedData.monthlyCost || 100;
+          if (serviceType === 'storage' && allocatedStorageGb) {
+            baseCost = (allocatedStorageGb / 1000) * baseCost;
+          }
+          const monthlyCost = baseCost * instances;
+
+          return {
+            id,
+            position: pos,
+            data: {
+              label,
+              regionId,
+              provider,
+              serviceType,
+              skuId,
+              instances,
+              allocatedStorageGb,
+              isPII,
+              pricingTier: nodeTier,
+              monthlyCost,
+              isConnected: true,
+            } as TopologyNodeData,
+          };
+        });
+
+        // Auto-normalize edges
+        const rawEdges = input.edges || this.edges;
+        const normalizedEdges = rawEdges.map((e: any, idx: number) => {
+          const source = e.source || (e.from ? e.from : '');
+          const target = e.target || (e.to ? e.to : '');
+          const id = e.id || `e-${source}-${target}-${idx}`;
+          const edgeData = e.data || e;
+          
+          return {
+            id,
+            source,
+            target,
+            data: {
+              monthlyTransferGb: edgeData.monthlyTransferGb || edgeData.transferGb || 1000,
+              connectionType: edgeData.connectionType || 'internet',
+              encrypted: edgeData.encrypted !== false,
+              monthlyEgressCost: edgeData.monthlyEgressCost || 0,
+              calculatedLatencyMs: edgeData.calculatedLatencyMs || 15.0,
+            } as TopologyEdgeData,
+          };
+        });
 
         if (this.onTopologyUpdateCallback) {
-          this.onTopologyUpdateCallback(nextNodes, nextEdges, nextTier);
+          this.onTopologyUpdateCallback(normalizedNodes, normalizedEdges, nextTier);
         }
 
-        const summary = evaluateTopology(nextNodes, nextEdges, nextTier);
+        const summary = evaluateTopology(normalizedNodes, normalizedEdges, nextTier);
         return {
           success: true,
-          nodeCount: nextNodes.length,
-          edgeCount: nextEdges.length,
+          nodeCount: normalizedNodes.length,
+          edgeCount: normalizedEdges.length,
+          pricingTier: nextTier,
           totalMonthlySpend: summary.totalMonthlySpend,
+          totalMonthlySavings: summary.totalMonthlySavings,
+          egressSpend: summary.egressSpend,
+          p95LatencyMs: summary.p95LatencyMs,
           violations: summary.violations,
         };
       },
@@ -448,28 +477,16 @@ export class WebMCPBridge {
         },
       },
       execute: async (input: CustomRateSheet) => {
-        const rateSheet: CustomRateSheet = {
-          version: input.version || '1.0',
-          enterpriseName: input.enterpriseName || 'Custom Enterprise EDA',
-          blanketDiscountPercent: input.blanketDiscountPercent || 0,
-          customEgressRatePerGb: input.customEgressRatePerGb,
-          skuOverrides: input.skuOverrides || [],
-        };
-
-        applyRateSheetToCatalog(RESOURCE_SKUS, rateSheet);
+        applyRateSheetToCatalog(RESOURCE_SKUS, input);
         const newSummary = evaluateTopology(this.nodes, this.edges, this.pricingTier);
-
-        if (this.onTopologyUpdateCallback) {
-          this.onTopologyUpdateCallback(this.nodes, this.edges, this.pricingTier);
-        }
 
         return {
           success: true,
-          appliedAgreement: rateSheet.enterpriseName,
-          blanketDiscountPercent: rateSheet.blanketDiscountPercent,
-          skuOverridesCount: rateSheet.skuOverrides?.length || 0,
+          enterpriseName: input.enterpriseName || 'Custom Corporate Agreement',
+          blanketDiscountPercent: input.blanketDiscountPercent || 0,
+          customEgressRatePerGb: input.customEgressRatePerGb,
           newTotalMonthlySpend: newSummary.totalMonthlySpend,
-          monthlySavingsAchieved: newSummary.totalMonthlySavings,
+          totalMonthlySavings: newSummary.totalMonthlySavings,
         };
       },
     });
@@ -477,46 +494,68 @@ export class WebMCPBridge {
     // Tool 8: export_terraform_iac
     register({
       name: 'export_terraform_iac',
-      description: 'Generates production-ready Terraform HCL infrastructure code and an Enterprise CPQ Quote for the active visual topology.',
+      description: 'Exports production-grade Terraform HCL 2.0 configuration code and formal CPQ Quote for the active architecture.',
       inputSchema: {
         type: 'object',
-        properties: {
-          clientName: { type: 'string', description: 'Client / enterprise name' },
-          projectTitle: { type: 'string', description: 'Project title' },
-        },
+        properties: {},
       },
-      execute: async (input: { clientName?: string; projectTitle?: string }) => {
+      execute: async () => {
         const hcl = generateTerraformHCL(this.nodes, this.edges);
         const quote = generateCPQQuote(
           this.nodes, 
           this.edges, 
-          input?.clientName || 'Enterprise Cloud Customer',
-          input?.projectTitle || 'Global Multi-Region Architecture CPQ',
+          'Enterprise Cloud Customer', 
+          'Automated WebMCP Architecture CPQ Quote', 
           this.pricingTier
         );
 
         return {
           terraformHCL: hcl,
-          quoteSummary: quote,
+          quoteSummary: {
+            quoteId: quote.quoteId,
+            totalMonthlySpend: quote.summary.totalMonthlySpend,
+            totalMonthlySavings: quote.summary.totalMonthlySavings,
+            egressBandwidthFee: quote.summary.egressSpend,
+            annualContractValue: quote.summary.totalMonthlySpend * 12,
+            threeYearTotalContractValue: quote.summary.totalMonthlySpend * 36,
+          },
         };
       },
     });
   }
 
-  public getTool(name: string): WebMCPTool | undefined {
-    return this.registeredTools.get(name);
+  public getTool(name: string): WebMCPToolDefinition | undefined {
+    return this.tools.get(name);
   }
 
-  public getAllTools(): WebMCPTool[] {
-    return Array.from(this.registeredTools.values());
+  public getAllTools(): WebMCPToolDefinition[] {
+    return Array.from(this.tools.values());
   }
 
   public async executeTool(name: string, input: any): Promise<any> {
-    const tool = this.registeredTools.get(name);
+    const tool = this.tools.get(name);
     if (!tool) {
-      throw new Error(`Tool '${name}' is not registered on WebMCP.`);
+      throw new Error(`WebMCP Tool '${name}' not found.`);
     }
     return await tool.execute(input);
+  }
+
+  private publishToWindow() {
+    if (typeof window !== 'undefined') {
+      const modelContext = {
+        tools: Array.from(this.tools.values()).map(t => ({
+          name: t.name,
+          description: t.description,
+          parameters: t.inputSchema,
+        })),
+        callTool: async (name: string, args: any) => {
+          return await this.executeTool(name, args);
+        },
+      };
+
+      (window as any).modelContext = modelContext;
+      (document as any).modelContext = modelContext;
+    }
   }
 }
 
