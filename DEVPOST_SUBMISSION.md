@@ -30,10 +30,16 @@ CloudTopology CPQ turns cloud architecture design into an interactive, FinOps-dr
 * **🤖 Full Autonomous WebMCP Control:** Exposes 8 standardized WebMCP tools directly in the browser DOM, allowing external AI coding agents (like ChatGPT Desktop, Claude Computer Use, Antigravity) to query 50+ enterprise SKUs, programmatically mutate canvas nodes, optimize commitment discounts, and simulate network egress.
 * **💰 Real-Time Multi-Cloud FinOps Engine:** Calculates on-demand rates, 1-Year Savings Plans (~35% off), 3-Year Savings Plans (~55% off), and Spot Fleets (~65% off) with support for custom negotiated Enterprise Discount Agreements (EDA).
 * **⚡ Piecewise Cross-Region Egress Simulation:** Computes non-linear data transfer costs across global regions:
-  $$\text{Cost}_{\text{egress}} = \sum_{i=1}^{n} \Delta \text{Volume}_i \times \text{Rate}_i$$
-* **🌍 Geodesic Speed-of-Light Latency Modeling:** Uses the Haversine distance formula to compute optical fiber flight time between global datacenters:
-  $$d = 2R \cdot \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta \phi}{2}\right) + \cos(\phi_1)\cos(\phi_2)\sin^2\left(\frac{\Delta \lambda}{2}\right)}\right)$$
-  $$\text{Latency}_{\text{RTT}} = 2 \times \left(\frac{d}{c_{\text{fiber}}}\right) \times \text{RefractionIndex} + \text{ProcessingOverhead}$$
+  ```
+  Cost_egress = ∑ (ΔVolume_i × Rate_i)
+  ```
+  *(Calculates tiered rates starting from 0–10 TB down to >150 TB volume discounts)*
+* **🌍 Geodesic Speed-of-Light Latency Modeling:** Uses the Haversine great-circle distance formula to compute physical optical fiber flight times between global datacenters:
+  ```
+  d = 2R · arcsin( √( sin²(Δφ / 2) + cos(φ₁) · cos(φ₂) · sin²(Δλ / 2) ) )
+  Latency_RTT = 2 × (d / c_fiber) × RefractionIndex + ProcessingOverhead
+  ```
+  *(Where R = 6,371 km Earth radius, c_fiber = 200,000 km/s speed of light in silica fiber, and RefractionIndex = 1.468)*
 * **🇪🇺 Instant GDPR & Data Residency Auditing:** Detects unencrypted cross-cloud public transit and flags databases containing EU PII located outside sovereign European regions, offering 1-click remediation.
 * **📋 Enterprise CPQ Quotes & Terraform IaC Export:** Generates formal itemized CPQ procurement documents (with ACV and 3-Year TCV metrics) and produces deployable Terraform HCL 2.0 configuration files.
 * **🌗 Light & Dark Theme Suite + Local Persistence:** Features default light mode, dark mode toggle, auto-save to `localStorage`, and 1-click JSON project export and import.
