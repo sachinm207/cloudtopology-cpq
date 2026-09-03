@@ -43,9 +43,38 @@ const edgeTypes = {
 
 const STORAGE_KEY_ACTIVE = 'cloudtopology_active_state_v2';
 const STORAGE_KEY_SAVED = 'cloudtopology_saved_projects_v2';
+const STORAGE_KEY_THEME = 'cloudtopology_theme_v1';
 
 export function App() {
   const initialPreset = ARCHITECTURE_PRESETS[1] || ARCHITECTURE_PRESETS[0];
+
+  // Theme state: dark | light
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+      if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+    } catch {}
+    return 'dark';
+  });
+
+  // Sync theme class with document element
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY_THEME, theme);
+    } catch {}
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Try loading active state from LocalStorage on mount
   const getInitialState = () => {
@@ -444,11 +473,12 @@ export function App() {
   }, [typedNodes, typedEdges]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0B0F19] text-gray-100 overflow-hidden select-none">
+    <div className={`flex flex-col h-screen w-screen transition-colors duration-200 ${theme === 'dark' ? 'dark bg-[#0B0F19] text-gray-100' : 'light bg-[#F8FAFC] text-gray-900'} overflow-hidden select-none`}>
       {/* 2-ROW FinOps Header & Action Bar */}
       <Header
         summary={summary}
         pricingTier={pricingTier}
+        theme={theme}
         onPricingTierChange={handleGlobalPricingTierChange}
         onOpenTerraform={() => setIsTerraformOpen(true)}
         onOpenQuote={() => setIsQuoteOpen(true)}
@@ -457,6 +487,7 @@ export function App() {
         onOpenWebMCPGuide={() => setIsWebMCPGuideOpen(true)}
         onClearCanvas={handleClearCanvas}
         onOpenSaveLoad={() => setIsSaveModalOpen(true)}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Workspace: Left Sidebar + Center React Flow Canvas */}
@@ -489,11 +520,18 @@ export function App() {
             defaultViewport={{ x: 100, y: 50, zoom: 0.85 }}
             minZoom={0.2}
             maxZoom={2}
-            className="bg-[#070A10]"
+            className={theme === 'dark' ? 'bg-[#070A10]' : 'bg-[#F8FAFC]'}
             style={{ width: '100%', height: '100%' }}
           >
-            <Background variant={BackgroundVariant.Dots} gap={24} size={1.2} color="#1F2937" />
-            <Controls className="!bg-gray-900 !border-gray-800 !text-gray-300 !fill-gray-300 shadow-xl" />
+            <Background 
+              variant={BackgroundVariant.Dots} 
+              gap={24} 
+              size={1.2} 
+              color={theme === 'dark' ? '#1F2937' : '#CBD5E1'} 
+            />
+            <Controls 
+              className={theme === 'dark' ? '!bg-gray-900 !border-gray-800 !text-gray-300 !fill-gray-300 shadow-xl' : '!bg-white !border-gray-200 !text-gray-700 !fill-gray-700 shadow-lg'} 
+            />
             <MiniMap
               nodeColor={(node) => {
                 const data = node.data as unknown as TopologyNodeData;
@@ -503,21 +541,21 @@ export function App() {
                 if (data?.provider === 'cloudflare') return '#F97316';
                 return '#6B7280';
               }}
-              className="!bg-gray-950/90 !border !border-gray-800 !rounded-xl !overflow-hidden shadow-2xl"
-              maskColor="rgba(11, 15, 25, 0.7)"
+              className={theme === 'dark' ? '!bg-gray-950/90 !border !border-gray-800 !rounded-xl !overflow-hidden shadow-2xl' : '!bg-white/95 !border !border-gray-300 !rounded-xl !overflow-hidden shadow-xl'}
+              maskColor={theme === 'dark' ? 'rgba(11, 15, 25, 0.7)' : 'rgba(241, 245, 249, 0.7)'}
             />
           </ReactFlow>
 
           {/* Empty Canvas Overlay State */}
           {renderedNodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="p-8 rounded-2xl bg-[#0B0F19]/90 border border-gray-800/90 backdrop-blur-xl max-w-md text-center shadow-2xl pointer-events-auto space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/20 shadow-md shadow-blue-500/10">
+              <div className="p-8 rounded-2xl dark:bg-[#0B0F19]/90 bg-white/95 border dark:border-gray-800/90 border-gray-300 backdrop-blur-xl max-w-md text-center shadow-2xl pointer-events-auto space-y-4">
+                <div className="w-12 h-12 rounded-2xl dark:bg-blue-500/10 bg-blue-100 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto border dark:border-blue-500/20 border-blue-200 shadow-md">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-gray-100 tracking-tight">Empty Canvas — Ready to Build</h3>
-                  <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                  <h3 className="text-base font-extrabold dark:text-gray-100 text-gray-900 tracking-tight">Empty Canvas — Ready to Build</h3>
+                  <p className="text-xs dark:text-gray-400 text-gray-600 mt-1.5 leading-relaxed">
                     Start architecting from scratch! Place compute and database nodes from the palette, load a pre-built template, or prompt an AI coding agent via WebMCP.
                   </p>
                 </div>
@@ -531,16 +569,16 @@ export function App() {
                   </button>
                   <button
                     onClick={() => handleLoadPreset(ARCHITECTURE_PRESETS[1])}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 text-xs font-semibold transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl dark:bg-gray-900 bg-gray-100 hover:dark:bg-gray-800 hover:bg-gray-200 border dark:border-gray-700 border-gray-300 dark:text-gray-200 text-gray-800 text-xs font-semibold transition-all cursor-pointer"
                   >
-                    <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                    <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Load Template</span>
                   </button>
                   <button
                     onClick={() => setIsSaveModalOpen(true)}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 text-xs font-semibold transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl dark:bg-gray-900 bg-gray-100 hover:dark:bg-gray-800 hover:bg-gray-200 border dark:border-gray-700 border-gray-300 dark:text-gray-200 text-gray-800 text-xs font-semibold transition-all cursor-pointer"
                   >
-                    <Save className="w-3.5 h-3.5 text-blue-400" />
+                    <Save className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     <span>Open Library</span>
                   </button>
                 </div>
@@ -549,7 +587,7 @@ export function App() {
           )}
 
           {/* Quick Info Floating Chip */}
-          <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 rounded-lg bg-gray-900/80 backdrop-blur-md border border-gray-800 text-[11px] text-gray-400 font-mono pointer-events-none flex items-center gap-2">
+          <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 rounded-lg dark:bg-gray-900/80 bg-white/90 backdrop-blur-md border dark:border-gray-800 border-gray-300 text-[11px] dark:text-gray-400 text-gray-600 font-mono pointer-events-none flex items-center gap-2 shadow-sm">
             <span>🖱️ Drag nodes to organize</span>
             <span>•</span>
             <span>⚡ Connect handles to route traffic</span>

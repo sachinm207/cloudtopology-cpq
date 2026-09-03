@@ -53,34 +53,34 @@ export const CustomEdge = memo((props: any) => {
           }}
           className={`group flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono shadow-lg backdrop-blur-md border transition-all cursor-pointer ${
             isHighCost 
-              ? 'bg-rose-950/90 border-rose-500/50 text-rose-200 hover:scale-105'
+              ? 'dark:bg-rose-950/90 bg-rose-50 dark:border-rose-500/50 border-rose-300 dark:text-rose-200 text-rose-800 hover:scale-105'
               : connType === 'cloudflare_tunnel'
-              ? 'bg-amber-950/90 border-amber-500/50 text-amber-200 hover:scale-105'
-              : 'bg-gray-900/90 border-gray-700/60 text-gray-200 hover:scale-105'
+              ? 'dark:bg-amber-950/90 bg-amber-50 dark:border-amber-500/50 border-amber-300 dark:text-amber-200 text-amber-800 hover:scale-105'
+              : 'dark:bg-gray-900/90 bg-white/95 dark:border-gray-700/60 border-gray-300 dark:text-gray-200 text-gray-800 hover:scale-105'
           }`}
           title={`Throughput: ${transferGb.toLocaleString()} GB/mo | Egress Cost: $${cost}/mo | Round-trip Latency: ${latency}ms`}
         >
           {connType === 'cloudflare_tunnel' ? (
-            <Zap className="w-3 h-3 text-amber-400 fill-amber-400/20" />
+            <Zap className="w-3 h-3 text-amber-500 fill-amber-400/20" />
           ) : connType === 'vpc_peering' ? (
-            <Lock className="w-3 h-3 text-emerald-400" />
+            <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
           ) : (
-            <Activity className="w-3 h-3 text-blue-400" />
+            <Activity className="w-3 h-3 text-blue-600 dark:text-blue-400" />
           )}
 
-          <span className="font-semibold text-gray-100">
+          <span className="font-semibold dark:text-gray-100 text-gray-900">
             {transferGb >= 1000 ? `${(transferGb / 1024).toFixed(1)} TB` : `${transferGb} GB`}
           </span>
 
-          <span className="text-gray-500">|</span>
+          <span className="dark:text-gray-500 text-gray-400">|</span>
 
-          <span className={cost > 0 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-medium'}>
+          <span className={cost > 0 ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-medium'}>
             ${Math.round(cost)}/mo
           </span>
 
-          <span className="text-gray-500">|</span>
+          <span className="dark:text-gray-500 text-gray-400">|</span>
 
-          <span className="text-cyan-300">
+          <span className="text-cyan-700 dark:text-cyan-300 font-medium">
             {latency}ms
           </span>
         </div>

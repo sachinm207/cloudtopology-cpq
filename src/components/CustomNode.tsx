@@ -6,28 +6,28 @@ import { CLOUD_REGIONS, RESOURCE_SKUS } from '../data/catalog';
 
 const providerStyles: Record<string, { bg: string; border: string; badge: string; text: string }> = {
   aws: {
-    bg: 'bg-[#18130D]/95',
-    border: 'border-amber-500/40 hover:border-amber-500',
-    badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    text: 'text-amber-400',
+    bg: 'dark:bg-[#18130D]/95 bg-amber-50/95',
+    border: 'dark:border-amber-500/40 border-amber-300 hover:border-amber-500',
+    badge: 'dark:bg-amber-500/15 bg-amber-100 dark:text-amber-300 text-amber-800 dark:border-amber-500/30 border-amber-300',
+    text: 'dark:text-amber-400 text-amber-700',
   },
   gcp: {
-    bg: 'bg-[#0B1524]/95',
-    border: 'border-blue-500/40 hover:border-blue-500',
-    badge: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-    text: 'text-blue-400',
+    bg: 'dark:bg-[#0B1524]/95 bg-blue-50/95',
+    border: 'dark:border-blue-500/40 border-blue-300 hover:border-blue-500',
+    badge: 'dark:bg-blue-500/15 bg-blue-100 dark:text-blue-300 text-blue-800 dark:border-blue-500/30 border-blue-300',
+    text: 'dark:text-blue-400 text-blue-700',
   },
   azure: {
-    bg: 'bg-[#0A1620]/95',
-    border: 'border-cyan-500/40 hover:border-cyan-500',
-    badge: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-    text: 'text-cyan-400',
+    bg: 'dark:bg-[#0A1620]/95 bg-cyan-50/95',
+    border: 'dark:border-cyan-500/40 border-cyan-300 hover:border-cyan-500',
+    badge: 'dark:bg-cyan-500/15 bg-cyan-100 dark:text-cyan-300 text-cyan-800 dark:border-cyan-500/30 border-cyan-300',
+    text: 'dark:text-cyan-400 text-cyan-700',
   },
   cloudflare: {
-    bg: 'bg-[#1A1107]/95',
-    border: 'border-orange-500/40 hover:border-orange-500',
-    badge: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
-    text: 'text-orange-400',
+    bg: 'dark:bg-[#1A1107]/95 bg-orange-50/95',
+    border: 'dark:border-orange-500/40 border-orange-300 hover:border-orange-500',
+    badge: 'dark:bg-orange-500/15 bg-orange-100 dark:text-orange-300 text-orange-800 dark:border-orange-500/30 border-orange-300',
+    text: 'dark:text-orange-400 text-orange-700',
   },
 };
 
@@ -41,10 +41,10 @@ const serviceIcons: Record<string, any> = {
 };
 
 const planLabels: Record<string, { label: string; bg: string; text: string }> = {
-  on_demand: { label: 'On-Demand', bg: 'bg-gray-800 text-gray-300 border-gray-700', text: 'text-gray-300' },
-  savings_plan_1yr: { label: '1-Yr SP', bg: 'bg-blue-500/20 text-blue-300 border-blue-500/30', text: 'text-blue-400' },
-  savings_plan_3yr: { label: '3-Yr SP', bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', text: 'text-emerald-400' },
-  spot: { label: 'Spot', bg: 'bg-purple-500/20 text-purple-300 border-purple-500/30', text: 'text-purple-400' },
+  on_demand: { label: 'On-Demand', bg: 'dark:bg-gray-800 bg-gray-100 dark:text-gray-300 text-gray-700 dark:border-gray-700 border-gray-300', text: 'dark:text-gray-300 text-gray-700' },
+  savings_plan_1yr: { label: '1-Yr SP', bg: 'dark:bg-blue-500/20 bg-blue-100 dark:text-blue-300 text-blue-800 dark:border-blue-500/30 border-blue-300', text: 'dark:text-blue-400 text-blue-700' },
+  savings_plan_3yr: { label: '3-Yr SP', bg: 'dark:bg-emerald-500/20 bg-emerald-100 dark:text-emerald-300 text-emerald-800 dark:border-emerald-500/30 border-emerald-300', text: 'dark:text-emerald-400 text-emerald-700' },
+  spot: { label: 'Spot', bg: 'dark:bg-purple-500/20 bg-purple-100 dark:text-purple-300 text-purple-800 dark:border-purple-500/30 border-purple-300', text: 'dark:text-purple-400 text-purple-700' },
 };
 
 export const CustomNode = memo((props: any) => {
@@ -90,7 +90,7 @@ export const CustomNode = memo((props: any) => {
         providerStyle.bg
       } ${
         isNew 
-          ? 'ring-4 ring-emerald-400/80 ring-offset-2 ring-offset-gray-950 shadow-2xl shadow-emerald-500/40 animate-pulse border-emerald-400' 
+          ? 'ring-4 ring-emerald-400/80 ring-offset-2 dark:ring-offset-gray-950 ring-offset-white shadow-2xl shadow-emerald-500/40 animate-pulse border-emerald-400' 
           : isUnconnected 
             ? 'border-dashed border-amber-400/70 shadow-amber-500/10' 
             : providerStyle.border
@@ -108,32 +108,32 @@ export const CustomNode = memo((props: any) => {
 
       {/* Unconnected Warning Tag */}
       {isUnconnected && !isNew && (
-        <div className="absolute -top-2.5 right-2 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono text-[8px] font-semibold flex items-center gap-0.5 shadow-sm z-20">
+        <div className="absolute -top-2.5 right-2 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 font-mono text-[8px] font-semibold flex items-center gap-0.5 shadow-sm z-20">
           <Link2Off className="w-2 h-2" />
           Unconnected
         </div>
       )}
 
       {/* Connection Handles */}
-      <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
-      <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
-      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
-      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-blue-400 !border-2 !border-gray-900 hover:!scale-150 transition-transform" />
+      <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !bg-blue-500 !border-2 dark:!border-gray-900 !border-white hover:!scale-150 transition-transform" />
+      <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !bg-blue-500 !border-2 dark:!border-gray-900 !border-white hover:!scale-150 transition-transform" />
+      <Handle type="target" position={Position.Left} className="!w-2.5 !h-2.5 !bg-blue-500 !border-2 dark:!border-gray-900 !border-white hover:!scale-150 transition-transform" />
+      <Handle type="source" position={Position.Right} className="!w-2.5 !h-2.5 !bg-blue-500 !border-2 dark:!border-gray-900 !border-white hover:!scale-150 transition-transform" />
 
       {/* Row 1: Icon + Title + Plan & GDPR Badges */}
       <div className="flex items-center justify-between gap-1.5 mb-1.5">
         <div className="flex items-center gap-1.5 min-w-0">
-          <div className={`p-1 rounded bg-gray-900/80 border border-gray-700/50 ${providerStyle.text} flex-shrink-0`}>
+          <div className={`p-1 rounded dark:bg-gray-900/80 bg-white/90 border dark:border-gray-700/50 border-gray-200 ${providerStyle.text} flex-shrink-0 shadow-sm`}>
             <ServiceIcon className="w-3.5 h-3.5" />
           </div>
-          <span className="font-bold text-xs text-gray-100 truncate">
+          <span className="font-bold text-xs dark:text-gray-100 text-gray-900 truncate">
             {data.label || 'Node'}
           </span>
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
           {data.isPII && (
-            <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-0.5">
+            <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/40 flex items-center gap-0.5">
               <Shield className="w-2.5 h-2.5" /> EU
             </span>
           )}
@@ -144,28 +144,30 @@ export const CustomNode = memo((props: any) => {
       </div>
 
       {/* Row 2: Region & Spec Chip */}
-      <div className="flex items-center justify-between text-[10px] text-gray-400 bg-gray-950/70 rounded-md px-2 py-1 mb-2 border border-gray-800/80 font-mono">
+      <div className="flex items-center justify-between text-[10px] dark:text-gray-400 text-gray-600 dark:bg-gray-950/70 bg-white/90 rounded-md px-2 py-1 mb-2 border dark:border-gray-800/80 border-gray-200 font-mono shadow-sm">
         <span className="truncate max-w-[110px]" title={region?.name || data.regionId}>
           📍 {region?.city || region?.name || data.regionId}
         </span>
-        <span className="text-gray-300 font-semibold truncate max-w-[100px]" title={`${shortSku} (${capacityLabel})`}>
+        <span className="font-medium text-blue-600 dark:text-blue-400 truncate max-w-[90px]" title={sku?.name}>
           {shortSku} ({capacityLabel})
         </span>
       </div>
 
-      {/* Row 3: Compact Footer Price */}
-      <div className="flex items-center justify-between pt-1 border-t border-gray-800/60 text-[11px]">
-        <span className="text-[10px] text-gray-400 font-mono">
-          <span className={`font-bold uppercase ${providerStyle.text}`}>{provider}</span>
+      {/* Row 3: Provider Tag & Live Spend Calculation */}
+      <div className="flex items-center justify-between pt-1 border-t dark:border-gray-800/60 border-gray-200 text-[10px] font-mono">
+        <span className="uppercase font-bold tracking-wider text-[9px] dark:text-gray-400 text-gray-500">
+          {provider}
         </span>
-        <div className="flex items-baseline gap-1.5">
+
+        <div className="flex items-center gap-1.5">
           {discount > 0 && (
-            <span className="text-[9px] text-gray-500 line-through font-mono">
+            <span className="line-through dark:text-gray-500 text-gray-400 text-[9px]">
               ${Math.round(onDemandTotal)}
             </span>
           )}
-          <span className="font-mono text-xs font-bold text-emerald-400">
-            ${dynamicMonthlyCost.toLocaleString()}<span className="text-[9px] text-gray-400 font-normal">/mo</span>
+          <span className="font-extrabold dark:text-emerald-400 text-emerald-700 text-xs">
+            ${dynamicMonthlyCost}
+            <span className="text-[9px] font-normal dark:text-gray-400 text-gray-500">/mo</span>
           </span>
         </div>
       </div>

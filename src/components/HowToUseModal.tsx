@@ -58,83 +58,83 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
     {
       step: '6',
       icon: FileText,
-      title: 'Export Production Terraform & Executive CPQ Quotes',
-      description: 'Click "CPQ Quote" to generate a formal PDF invoice document, or click "Terraform" to export copy-pasteable HCL 2.0 infrastructure-as-code for immediate deployment.',
-      badge: 'Export Tools',
+      title: 'Export CPQ Quotes & Terraform Code',
+      description: 'Click "CPQ Quote" to generate an executive procurement document with ACV/TCV breakdown, or click "Terraform" to export deployable Terraform HCL 2.0 files.',
+      badge: 'Exports',
+    },
+    {
+      step: '7',
+      icon: ShieldCheck,
+      title: 'Real-Time Audits & GDPR Data Residency',
+      description: 'The real-time compliance engine detects EU PII data residency violations, unencrypted cross-cloud links, and excessive egress cost spikes automatically.',
+      badge: 'Audits Tab',
     },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in select-none">
-      <div className="relative w-full max-w-3xl max-h-[90vh] bg-[#0B0F19] border border-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="dark:bg-[#0D121F] bg-white border dark:border-gray-800 border-gray-300 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-950/70">
+        <div className="p-5 border-b dark:border-gray-800 border-gray-200 flex items-center justify-between dark:bg-gray-950/60 bg-gray-50">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+            <div className="p-2 rounded-xl dark:bg-blue-600/20 bg-blue-100 text-blue-600 dark:text-blue-400 border dark:border-blue-500/30 border-blue-200">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-gray-100">How to Use CloudTopology CPQ</h2>
-              <p className="text-xs text-gray-400">Step-by-step visual architecting and FinOps cost optimization guide</p>
+              <h2 className="text-base font-bold dark:text-gray-100 text-gray-900">
+                How to Use CloudTopology CPQ
+              </h2>
+              <p className="text-xs dark:text-gray-400 text-gray-500">
+                Step-by-step visual guide to designing multi-cloud architectures, calculating FinOps spend, and exporting IaC
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-all cursor-pointer"
+            className="p-1.5 rounded-lg dark:text-gray-400 text-gray-500 hover:dark:text-gray-200 hover:text-gray-800 hover:dark:bg-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {steps.map((s) => {
-              const Icon = s.icon;
-              return (
-                <div 
-                  key={s.step}
-                  className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-blue-500/40 transition-all space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-blue-600/20 text-blue-400 font-mono text-xs font-bold flex items-center justify-center border border-blue-500/30">
-                        {s.step}
-                      </span>
-                      <Icon className="w-4 h-4 text-gray-300" />
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
-                      {s.badge}
+        {/* Body */}
+        <div className="p-6 overflow-y-auto space-y-4 text-xs">
+          {steps.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={index}
+                className="p-4 rounded-xl dark:bg-gray-900/40 bg-gray-50 border dark:border-gray-800/80 border-gray-200 flex items-start gap-4 hover:dark:border-blue-500/30 hover:border-blue-300 transition-all shadow-sm"
+              >
+                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-mono font-bold text-xs shadow-md shadow-blue-500/20">
+                  {item.step}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h4 className="font-bold text-xs dark:text-gray-200 text-gray-900 flex items-center gap-1.5">
+                      <Icon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      {item.title}
+                    </h4>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded dark:bg-blue-500/10 bg-blue-100 text-blue-700 dark:text-blue-300 border dark:border-blue-500/20 border-blue-200 flex-shrink-0">
+                      {item.badge}
                     </span>
                   </div>
-                  <h3 className="text-xs font-bold text-gray-100">{s.title}</h3>
-                  <p className="text-[11px] text-gray-400 leading-relaxed">{s.description}</p>
+                  <p className="text-[11px] dark:text-gray-400 text-gray-600 leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Quick Tips Box */}
-          <div className="p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/30 space-y-2">
-            <h4 className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-indigo-400" />
-              FinOps Pro-Tips:
-            </h4>
-            <ul className="text-[11px] text-gray-300 space-y-1 list-disc list-inside">
-              <li><strong className="text-indigo-200">Zero-Egress Caching:</strong> Connect a Cloudflare Edge node to AWS/GCP resources to automatically eliminate public data transfer bills.</li>
-              <li><strong className="text-indigo-200">GDPR Compliance:</strong> Check the "Audits" tab in the sidebar if you transfer PII customer data outside the EU.</li>
-              <li><strong className="text-indigo-200">Stateful Safety:</strong> Databases and storage automatically block Spot instances to prevent accidental data loss.</li>
-            </ul>
-          </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-gray-800 bg-gray-950/80 flex items-center justify-end">
+        <div className="p-4 border-t dark:border-gray-800 border-gray-200 dark:bg-gray-950/80 bg-gray-50 flex items-center justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all cursor-pointer shadow-lg shadow-blue-600/20"
+            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all cursor-pointer shadow-md shadow-blue-500/20"
           >
-            Got It, Let's Build!
+            Got it, Let's Build!
           </button>
         </div>
       </div>
