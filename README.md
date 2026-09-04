@@ -11,7 +11,7 @@
 
 > **🌐 Live Production Web App:** [https://cloudtopology-cpq.vercel.app](https://cloudtopology-cpq.vercel.app)  
 > **📦 GitHub Repository:** [https://github.com/sachinm207/cloudtopology-cpq](https://github.com/sachinm207/cloudtopology-cpq)  
-> **🏆 Devpost Submission Guide:** [DEVPOST_SUBMISSION.md](DEVPOST_SUBMISSION.md)  
+> **📖 User Guide & FAQ:** [docs/USER_GUIDE_AND_FAQ.md](docs/USER_GUIDE_AND_FAQ.md)  
 
 ---
 
@@ -20,6 +20,9 @@
 Enterprises waste **over $150 Billion annually** on misconfigured cloud infrastructure, unbudgeted cross-region network egress bandwidth, and unoptimized commitment discounts.
 
 **CloudTopology CPQ** is an interactive multi-cloud Configure-Price-Quote (CPQ) and network topology co-pilot. Built on **React Flow** and powered by **WebMCP**, it enables human cloud architects and autonomous AI coding agents to visually design, cost-simulate, and mathematically optimize multi-region architectures (AWS, GCP, Azure, Cloudflare) in real time with sub-10ms deterministic calculation speed.
+
+> [!NOTE]
+> **Prototype & Beta Status:** CloudTopology CPQ is currently an active **prototype / beta**. The catalog covers core, high-impact compute, database, storage, and edge networking SKUs across AWS, GCP, Azure, and Cloudflare. Comprehensive long-tail cloud components and specialized niche PaaS resources are not yet included and are planned for subsequent catalog expansions.
 
 ---
 
@@ -33,6 +36,7 @@ Enterprises waste **over $150 Billion annually** on misconfigured cloud infrastr
    * Calculates non-linear multi-tier bandwidth tariffs and geodesic optical fiber round-trip times (ms) using the Haversine distance formula between global datacenters.
 4. **🇪🇺 Instant GDPR Data Residency Auditing:**
    * Flags databases with customer PII located outside sovereign European regions and detects unencrypted cross-cloud links with 1-click remediation.
+   * *Compliance Disclaimer:* Current GDPR validation is an architectural prototype heuristic based on region tags and PII metadata. It is **not yet fully robust for production legal certification** and needs to be analyzed in greater detail across complex international compliance frameworks (e.g. EU-US Data Privacy Framework, Schrems II transfer assessments).
 5. **📋 Enterprise CPQ Quotes & Terraform IaC Export:**
    * Synthesizes formal procurement documents (with ACV/TCV metrics) and generates ready-to-run Terraform HCL 2.0 files.
 6. **💾 Persistence & JSON Import/Export:**
@@ -62,6 +66,7 @@ Enterprises waste **over $150 Billion annually** on misconfigured cloud infrastr
 * **Workflow:** `.github/workflows/update_cloud_pricing.yml`
 * **Schedule:** Runs automatically at `00:00 UTC` on the 1st of every month.
 * **Functionality:** Queries official cloud rate APIs, validates schema integrity, executes test suites (`vitest`), and opens automated Pull Requests.
+* **⚠️ Testing & Prototype Notice:** This workflow is currently an architectural specification and **has not yet been tested or run in production**. Because the application is currently a prototype, cloud pricing data is statically seeded from public CSP price sheets and custom enterprise discount uploads (`CustomRateSheet`).
 
 ---
 
@@ -87,7 +92,6 @@ npm run build
 
 ## 📚 Documentation & Architecture Guides
 
-* **🏆 [DEVPOST_SUBMISSION.md](DEVPOST_SUBMISSION.md):** Complete hackathon submission pitch, story with LaTeX mathematics, and tech stack.
 * **📊 [FinOps & Latency Architecture](docs/FINOPS_AND_LATENCY_ARCHITECTURE.md):** In-depth breakdown of piecewise egress tariffs, Haversine geodesic distance, and commitment discount multipliers.
 * **📖 [User Guide & FAQ](docs/USER_GUIDE_AND_FAQ.md):** Step-by-step visual onboarding, WebMCP agent prompts, and frequently asked questions.
 * **🖼️ [Screenshot Gallery](gallery/):** 12 high-resolution 3:2 ratio screenshots showcasing all features in Light and Dark themes.
